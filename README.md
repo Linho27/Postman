@@ -18,11 +18,11 @@ Funcionalidades
  
 Tecnologias Utilizadas
 
-	• Raspberry Pi (ou outro microcontrolador)
+	• Raspberry Pi
  
 	• Python para a lógica de controle e comunicação com o MTS
  
-	• GPIO para controle de hardware (sensores, motores, etc.)
+	• GPIO para controlo do hardware
  
 	• API de Integração com MTS para consultar informações de localização.
  
