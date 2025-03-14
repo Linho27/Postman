@@ -65,3 +65,9 @@ def warnWrongPos(rightPos, wrongPos):
 def rightPos(rightpos):
     for i in rightPos:
         strip.setPixelColor(i, GREEN)
+
+def calcSegment(segment):
+    leds_per_segment = 3  # Each segment has 3 LEDs
+    segmentStart = (segment - 1) * leds_per_segment
+    segmentEnd = segmentStart + leds_per_segment
+    return segmentStart, segmentEnd
