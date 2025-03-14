@@ -1,5 +1,6 @@
 from modules.fan import *
 from modules.leds import *
+from modules.switches import *
 import RPi.GPIO as GPIO
 import threading
 
