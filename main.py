@@ -1,4 +1,5 @@
 from modules.fan import *
+from modules.leds import *
 import RPi.GPIO as GPIO
 import threading
 
@@ -12,3 +13,4 @@ if __name__ == "__main__":
             print("Programa interrompido pelo usuário.")
         finally:
             GPIO.cleanup()
+            ledsOff()
