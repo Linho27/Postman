@@ -7,7 +7,9 @@ Este projeto tem como objetivo o desenvolvimento de um carrinho inteligente capa
 
 Funcionalidades
 	• Leitura de códigos QR ou códigos de barras em placas.
+ 
 	• Comunicação com o MTS para verificar e obter dados de localização.
+ 
 	• Interface amigável para direcionar o usuário sobre onde colocar a placa de forma otimizada.
  
 Tecnologias Utilizadas
