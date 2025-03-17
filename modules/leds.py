@@ -43,31 +43,39 @@ def ledsOff():
 
 # Turn on LEDs on right position to place the plate 
 def indicateRightPos(rightIndicatorPos):
-    for i in rightIndicatorPos:
-        strip.setPixelColor(i, BLUE)
+    segmentStart, segmentEnd = calcSegment(rightIndicatorPos)
+    enableSegment(segmentStart, segmentEnd, BLUE)
 
 # Turn on blinking LEDs on right and wrong plate position
 def warnWrongPos(rightPos, wrongPos):
-    for i in rightPos:                      #Blink right pos
-        if strip.getPixelColor(i) == OFF:
-            strip.setPixelColor(i, GREEN)
-        else:
-            strip.setPixelColor(i, OFF)
-    for i in wrongPos:                      #Blink wrong pos
-        if strip.getPixelColor(i) == OFF:
-            strip.setPixelColor(i, RED)
-        else:
-            strip.setPixelColor(i, OFF)
-    strip.show()
+    #Blink right pos
+    segmentStartR, segmentEndR = calcSegment(rightPos)
+    enableIntermittentSegment(segmentStartR, segmentEndR, GREEN)
+    #Blink wrong pos
+    segmentStartW, segmentEndW = calcSegment(rightPos)
+    enableIntermittentSegment(segmentStartW, segmentEndW, RED)
     time.sleep(1.5)
     
 # Turn on LEDs on right plate position
-def rightPos(rightpos):
-    for i in rightPos:
-        strip.setPixelColor(i, GREEN)
+def rightPos(rightPos):
+    segmentStart, segmentEnd = calcSegment(rightPos)
+    enableSegment(segmentStart, segmentEnd, GREEN)
 
 def calcSegment(segment):
     leds_per_segment = 3  # Each segment has 3 LEDs
     segmentStart = (segment - 1) * leds_per_segment
     segmentEnd = segmentStart + leds_per_segment
     return segmentStart, segmentEnd
+
+def enableSegment(start, end, color):
+    for i in range(start, end):
+        strip.setPixelColor(i, color)  # Set the LED color
+    strip.show()
+
+def enableIntermittentSegment(start, end, color):
+    for i in range(start, end):                     
+        if strip.getPixelColor(i) == OFF:
+            strip.setPixelColor(i, color)
+        else:
+            strip.setPixelColor(i, OFF)
+    strip.show()
