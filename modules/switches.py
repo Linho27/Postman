@@ -1,7 +1,7 @@
 #Switches controll module
 
 # Libraries import
-import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO # type: ignore
 import time
 import os 
 
@@ -19,8 +19,7 @@ def verificar_switch():
     # Limpa a "consola" do programa (não o terminal)
     print("\033c", end="")  # Limpeza da consola do programa usando escape ANSI
 
-    for index, pin in enumerate(switchesPins
-):
+    for index, pin in enumerate(switchesPins):
         if GPIO.input(pin) == GPIO.LOW:  # O switch foi pressionado (fechado)
             print(f"Peça detectada no switch {index + 1}.")
 

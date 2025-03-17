@@ -2,10 +2,9 @@
 
 # Libraries import
 import time
-from rpi_ws281x import PixelStrip, Color
+from rpi_ws281x import PixelStrip, Color                                # type: ignore
 
 # Define colors for later use
-
 OFF = Color(0, 0, 0)
 PURPLE = Color(160, 32, 240)
 RED = Color(255, 0, 0)
@@ -39,7 +38,7 @@ def startUp():
 # Turn off every LED on strip
 def ledsOff():
     print("Turning off LEDs.")
-    color_wipe(strip, Color(0, 0, 0), wait_ms=10)  # Turns off LEDs
+    color_wipe(strip, OFF, wait_ms=10)  # Turns off LEDs (no color)
 
 # Turn on LEDs on right position to place the plate 
 def indicateRightPos(rightIndicatorPos):

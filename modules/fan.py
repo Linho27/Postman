@@ -1,8 +1,8 @@
 #Fan controlling module
 
 # Libraries import
-import RPi.GPIO as GPIO
-from gpiozero import CPUTemperature
+import RPi.GPIO as GPIO # type: ignore
+from gpiozero import CPUTemperature # type: ignore
 from time import sleep
 
 # Pin & MaxTemp definition
@@ -38,4 +38,4 @@ def check_temp():
             GPIO.output(fanPin, GPIO.LOW)
             fanStatus = False  # Update fanStatus to False when the fan is turned off
         
-        sleep(5)  # Wait for 5 seconds to prevent stressing the Raspberry Pi
+        sleep(5)  # Wait for 5 seconds to prevent overloading the Raspberry Pi
