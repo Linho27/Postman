@@ -1,7 +1,7 @@
 #Switches controll module
 
 # Libraries import
-import RPi.GPIO as GPIO                                             # type: ignore
+import RPi.GPIO as GPIO                     # type: ignore
 import time
 import os 
 

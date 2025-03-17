@@ -2,7 +2,7 @@
 
 # Libraries import
 import time
-from rpi_ws281x import PixelStrip, Color                                # type: ignore
+from rpi_ws281x import PixelStrip, Color    # type: ignore
 
 # Define colors for later use
 OFF = Color(0, 0, 0)

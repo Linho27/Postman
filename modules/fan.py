@@ -1,8 +1,8 @@
 #Fan controlling module
 
 # Libraries import
-import RPi.GPIO as GPIO # type: ignore
-from gpiozero import CPUTemperature # type: ignore
+import RPi.GPIO as GPIO                     # type: ignore
+from gpiozero import CPUTemperature         # type: ignore
 from time import sleep
 
 # Pin & MaxTemp definition

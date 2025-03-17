@@ -1,8 +1,9 @@
 from modules.fan import *
 from modules.leds import *
 from modules.switches import *
-import RPi.GPIO as GPIO                                                     # type: ignore
+import RPi.GPIO as GPIO                     # type: ignore
 import threading
+import time
 
 if __name__ == "__main__":
         try:
@@ -29,7 +30,15 @@ if __name__ == "__main__":
                     indicateRightPos()
                     while didntChange(compareSwitches(switchesStates)):
                          time.sleep(0.5)
-                    if platePosition != 
+                    ledsOff()
+                    switchesStatesNew = getSwitches()
+                    if len(switchesStatesNew) == 1 and switchesStatesNew[0] == platePosition:
+                        rightPos(platePosition)
+                        time.sleep(10)
+                        ledsOff()
+                    else
+                        
+
             """
                 
         except KeyboardInterrupt:
