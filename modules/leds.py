@@ -45,13 +45,19 @@ def indicateRightPos(rightIndicatorPos):
     segmentStart, segmentEnd = calcSegment(rightIndicatorPos)
     enableSegment(segmentStart, segmentEnd, BLUE)
 
+# Turn on blinking LEDs on occupied plate position
+def warnOccupiedPos(pos):
+    segmentStart, segmentEnd = calcSegment(rightPos)
+    enableIntermittentSegment(segmentStart, segmentEnd, RED)
+    time.sleep(1.5)
+
 # Turn on blinking LEDs on right and wrong plate position
 def warnWrongPos(rightPos, wrongPos):
     #Blink right pos
     segmentStartR, segmentEndR = calcSegment(rightPos)
     enableIntermittentSegment(segmentStartR, segmentEndR, GREEN)
     #Blink wrong pos
-    segmentStartW, segmentEndW = calcSegment(rightPos)
+    segmentStartW, segmentEndW = calcSegment(wrongPos)
     enableIntermittentSegment(segmentStartW, segmentEndW, RED)
     time.sleep(1.5)
     

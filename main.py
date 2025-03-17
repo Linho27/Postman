@@ -12,6 +12,26 @@ if __name__ == "__main__":
             tempThread.join()
             while True:
                 warnWrongPos(1, 3) #Testing
+                print(1)
+                
+            """
+            while True:
+                MTS connection here
+
+                Scan for qr codes until one is read
+
+                Look for id in qr code with mts
+
+                If position is occupied
+                    warnOccupiedPos(platePosition)
+                else
+                    switchesStates = getSwitches()
+                    indicateRightPos()
+                    while didntChange(compareSwitches(switchesStates)):
+                         time.sleep(0.5)
+                    if platePosition != 
+            """
+                
         except KeyboardInterrupt:
             print("Programa interrompido pelo usuário.")
         finally:
