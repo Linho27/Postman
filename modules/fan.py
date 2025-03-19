@@ -9,16 +9,15 @@ from time import sleep
 fanPin = 17
 tempLimit = 40
 
-# Pins setup
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(fanPin, GPIO.OUT)
-GPIO.output(fanPin, GPIO.LOW)
-
 # Global fanStatus variable for tracking the fan state
 fanStatus = False  # Start fan status as off
 
 # Check temperature function
 def check_temp():
+    # Pins setup
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(fanPin, GPIO.OUT)
+    GPIO.output(fanPin, GPIO.LOW)
     global fanStatus  # Declare fanStatus as global so it can be modified here
     cpu = CPUTemperature()  # Creating instance to read CPU temp
     
