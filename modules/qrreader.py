@@ -24,3 +24,6 @@ def ler_qr():
             data = qr.data.decode('utf-8')
             picam2.stop()
             return data  # Return read QR code
+        
+codigo_qr = ler_qr()
+print(f"Código QR Detetado: {codigo_qr}")
