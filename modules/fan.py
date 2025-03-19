@@ -7,7 +7,7 @@ from time import sleep
 
 # Pin & MaxTemp definition
 fanPin = 17
-tempLimitMax = 45
+tempLimitMax = 50
 tempLimitMin = 40
 
 # Global fanStatus variable for tracking the fan state
