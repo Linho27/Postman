@@ -1,6 +1,7 @@
 from modules.fan import *
 from modules.leds import *
 from modules.switches import *
+from modules.qrreader import *
 import RPi.GPIO as GPIO                     # type: ignore
 import multiprocessing
 import time
