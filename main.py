@@ -2,18 +2,17 @@ from modules.fan import *
 from modules.leds import *
 from modules.switches import *
 import RPi.GPIO as GPIO                     # type: ignore
-import threading
+import multiprocessing
 import time
 
 if __name__ == "__main__":
         try:
             #Start fan controll in a thread
-            tempThread = threading.Thread(target=check_temp)  
-            tempThread.start()
-            tempThread.join()
+            tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
+            tempChecking.start()
             while True:
                 warnWrongPos(1, 3) #Testing
-                print(1)
+                time.sleep(1)
                 
             """
             while True:
