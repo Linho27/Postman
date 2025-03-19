@@ -13,9 +13,11 @@ def obter_pokemon(nome_ou_id):
         print("Erro ao obter dados do Pokémon.")
         return None
 
-# Exemplo de utilização
-pokemon = obter_pokemon("pikachu")
-if pokemon:
-    print(f"Nome: {pokemon['name']}")
-    print(f"Altura: {pokemon['height']} cm")
-    print(f"Peso: {pokemon['weight']} kg")
+def getPos(id):
+    url = f"<link da api>{id}"
+    response = requests.get(url)    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print("Erro ao conectar.")
+        return None
