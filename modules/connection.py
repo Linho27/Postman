@@ -19,5 +19,3 @@ if pokemon:
     print(f"Nome: {pokemon['name']}")
     print(f"Altura: {pokemon['height']} cm")
     print(f"Peso: {pokemon['weight']} kg")
-
-#que top mano
