@@ -7,7 +7,8 @@ from time import sleep
 
 # Pin & MaxTemp definition
 fanPin = 17
-tempLimitMax = 40
+tempLimitMax = 45
+tempLimitMin = 40
 
 # Global fanStatus variable for tracking the fan state
 fanStatus = False  # Start fan status as off
@@ -32,7 +33,7 @@ def check_temp():
             fanStatus = True  # Update fanStatus to True when the fan is turned on
             
         # If the CPU temperature is lower than the limit and the fan is on, turn it off
-        elif cpuTemp <= tempLimitMax and fanStatus:
+        elif cpuTemp <= tempLimitMin and fanStatus:
             print("Temperatura dentro do limite. Desligando ventoinha...")
             GPIO.output(fanPin, GPIO.LOW)
             fanStatus = False  # Update fanStatus to False when the fan is turned off
