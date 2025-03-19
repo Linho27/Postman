@@ -65,6 +65,8 @@ def warnWrongPos(rightPos, wrongPos):
 def rightPos(rightPos):
     segmentStart, segmentEnd = calcSegment(rightPos)
     enableSegment(segmentStart, segmentEnd, GREEN)
+    time.sleep(10)
+    ledsOff()   
 
 def calcSegment(segment):
     leds_per_segment = 3  # Each segment has 3 LEDs
