@@ -16,7 +16,7 @@ LED_COUNT = 36
 LED_PIN = 18          
 LED_FREQ_HZ = 800000    #800kHz for WS2813
 LED_DMA = 10          
-LED_BRIGHTNESS = 128    # 0-255
+LED_BRIGHTNESS = 64    # 0-255
 LED_INVERT = False
 
 # LED strip configuration

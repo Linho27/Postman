@@ -3,46 +3,65 @@
 # Libraries import
 import requests
 
-
+#Define API link
 linkAPI = "http://127.0.0.1:5000"
-def getPos(id):
-    # Definir a URL do servidor Flask
-    url = linkAPI + f'/todas_as_pecas'
+#End points:
+#   /everyPlate
+#   /status/{pos}
+#   /toggle/{pos}
 
+#Function to get the position of a specific plate
+def getPos(id):
+    url = linkAPI + f'/everyPlate'
     try:
-        # Fazer a requisição GET para obter todas as peças
-        resposta = requests.get(url)
+        # Get request to get info of every plate
+        response = requests.get(url)
         
-        # Se a resposta for bem-sucedida (status code 200)
-        if resposta.status_code == 200:
-            pecas = resposta.json()
+        # Verify if answer was successful
+        if response.status_code == 200:
+            plates = response.json()
             
-            # Procurar a peça pelo número de série
-            for numero, dados in pecas.items():
-                if dados["numero_serie"] == id:
-                    return numero  # Devolver a posição (número) da peça
+            # Search plate by its id
+            for position, data in plates.items():
+                if data["numero_serie"] == id:
+                    return position  # Return plate position
             return f"Peça com código de série {id} não encontrada."
         else:
-            return f"Erro ao obter dados do servidor. Código de status: {resposta.status_code}"
+            return f"Erro ao obter dados do servidor. Código de status: {response.status_code}"
     
     except requests.exceptions.RequestException as e:
         return f"Erro na requisição: {e}"
-    
+
+#Function to toggle position status
+def togglePos(pos):
+    #Check if position is within limits
+    if not (1 <= pos <= 12):
+        return "Número inválido. Deve estar entre 1 e 12."
+
+    url = linkAPI + f"/toggle/{pos}"
+    try:
+        response = requests.post(url)
+        if response.status_code == 200:
+            return f"Estado da peça {pos} alternado com sucesso."
+        return f"Erro ao alternar o estado da peça {pos}. Código: {response.status_code}"
+    except requests.exceptions.RequestException as e:
+        return f"Erro na requisição: {e}"
+
+#Function to check if a specific position is occupied    
 def isOccupied(pos):
-    url = linkAPI + f"/estado/{pos}"
-    
+    url = linkAPI + f"/status/{pos}"    
     try:
         # Send GET request to the API
-        resposta = requests.get(url)
+        response = requests.get(url)
         
         # Verify if answer was successful
-        if resposta.status_code == 200:
-            estado = resposta.json()
+        if response.status_code == 200:
+            state = response.json()
             
-            # Verifica o estado do número e retorna True se for "ocupado"
-            return estado.get(str(pos)) == "ocupado"
+            # Check if position is occupied
+            return state.get(str(pos)) == "ocupado"
         else:
-            print(f"Erro na requisição: {resposta.status_code}")
+            print(f"Erro na requisição: {response.status_code}")
             return False
     except requests.exceptions.RequestException as e:
         print(f"Erro na conexão com a API: {e}")
