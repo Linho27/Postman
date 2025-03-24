@@ -20,7 +20,7 @@ if __name__ == "__main__":
                     warnOccupiedPos(platePosition)
                 else:
                     switchesStates = getSwitches()                      #Save switches states
-                    indicateRightPos()                                  #Indicate where to place the plate
+                    indicateRightPos(platePosition)                                  #Indicate where to place the plate
                     while didntChange(compareSwitches(switchesStates)): #Wait until something changes
                         time.sleep(0.5)
                     ledsOff()                                           #Turn off indicating light
