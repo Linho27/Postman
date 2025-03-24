@@ -38,10 +38,3 @@ def didntChange(states):
         return True
     else:
         return False
-    
-def isOccupied(position):
-    pin = switchesPins[position]
-    if GPIO.input(pin) == GPIO.LOW:
-        return True
-    else:
-        return False
