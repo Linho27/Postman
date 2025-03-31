@@ -1,7 +1,6 @@
 from modules.fan import *
 from modules.leds import *
 from modules.switches import *
-from modules.qrreader import *
 from modules.connection import *
 import RPi.GPIO as GPIO                     # type: ignore
 import multiprocessing
@@ -14,13 +13,13 @@ if __name__ == "__main__":
             tempChecking.start()
             while True:
                 
-                qr_code = readQr()                  #Scan for QR codes until one is read
-                platePosition = getPos(qr_code)     # Look for ID in QR code with MTS
+                code = input()                      # Wait for bar/qr code input
+                platePosition = getPos(code)        # Look for ID with code with MTS
                 if isOccupied(platePosition):       # If position is occupied
                     warnOccupiedPos(platePosition)
                 else:
                     switchesStates = getSwitches()                      #Save switches states
-                    indicateRightPos(platePosition)                                  #Indicate where to place the plate
+                    indicateRightPos(platePosition)                     #Indicate where to place the plate
                     while didntChange(compareSwitches(switchesStates)): #Wait until something changes
                         time.sleep(0.5)
                     ledsOff()                                           #Turn off indicating light
