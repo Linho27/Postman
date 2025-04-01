@@ -7,7 +7,11 @@ from modules.connection import getPos, isOccupied, togglePos
 def main():
     while True:
         print("A aguardar leitura do QR Code...")
-        qr_code = input("Insere o código de série da peça: ")
+        qr_code = input("Insere o código de série da peça: ").strip()
+        
+        if not qr_code:
+            print("Código não pode estar vazio!")
+            continue
         
         pos_correta = getPos(qr_code)
         if isinstance(pos_correta, str):
@@ -39,6 +43,7 @@ def main():
             ledsOff()
         
         time.sleep(2)
+        print("Processo concluído. A aguardar próximo código...")
 
 if __name__ == "__main__":
     main()
