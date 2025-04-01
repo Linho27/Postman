@@ -31,8 +31,9 @@ def compareSwitches(oldStates):
     return switchNumList
 
 # Function to return a boolean if the switches stayed with the same status
+# Function to return a boolean if the switches remained unchanged
 def didntChange(states):
-    if states.lenght == 0:
+    if len(states) == 0:  # Corrected the typo
         return True
     else:
         return False
