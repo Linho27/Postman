@@ -23,13 +23,11 @@ def getSwitches():
     return switchStates
 
 # Function to compare the status of a list of switches
-def compareSwitches(old):
-    switchNum = 0
+def compareSwitches(oldStates):
     switchNumList = []
-    for switch in old:
-        if GPIO.input(switch) != old[switchNum]:
-           switchNumList.append(switchNum)         
-        switchNum += 1
+    for i, pin in enumerate(switchesPins):  # Iterate over the pins correctly
+        if GPIO.input(pin) != oldStates[i]:  # Compare current state with the previous one
+            switchNumList.append(i)         
     return switchNumList
 
 # Function to return a boolean if the switches stayed with the same status
