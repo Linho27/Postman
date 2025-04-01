@@ -1,96 +1,96 @@
 #!/usr/bin/env python3
-# Main control system for plate management
+# Sistema completo de gerenciamento de placas com integração de todos os módulos
 
-from modules.switches import getSwitches, compareSwitches, didntChange
-from modules.fan import check_temp
-from modules.leds import startUp, ledsOff, indicateRightPos, warnOccupiedPos, warnWrongPos, rightPos
-from modules.connection import getPos, isOccupied, togglePos
+from modules.fan import *
+from modules.leds import *
+from modules.switches import *
+from modules.connection import *
+import RPi.GPIO as GPIO                     # type: ignore
+import multiprocessing
 import time
 import sys
 
 def main():
     try:
-        # Initialize system
-        print("Starting plate management system...")
-        startUp()  # Test LEDs
+        # Inicialização do sistema
+        print("Sistema de gerenciamento de placas iniciando...")
         
-        # Start fan control in background
-        import threading
-        fan_thread = threading.Thread(target=check_temp, daemon=True)
-        fan_thread.start()
+        # Controle de temperatura em processo separado
+        tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
+        tempChecking.start()
         
-        # Main loop
+        # Teste inicial dos LEDs
+        startUp()
+        
+        # Estado inicial dos switches
         previous_states = getSwitches()
+        
         while True:
-            # Check for plate insertion/removal
-            current_states = getSwitches()
-            changed_switches = compareSwitches(previous_states)
+            # Verificação de entrada de código (simulado)
+            code = input("Aguardando leitura de código QR/Barra (ou digite 404 para sair): ").strip()
             
-            if not didntChange(changed_switches):
-                for switch_num in changed_switches:
-                    pos = switch_num + 1  # Convert to 1-based position
-                    
-                    # Plate inserted (switch activated)
-                    if current_states[switch_num] == 0:
-                        print(f"Plate detected in position {pos}")
-                        
-                        # Simulate QR code reading (replace with actual reader)
-                        plate_id = input(f"Enter plate ID for position {pos}: ").strip()
-                        
-                        if not plate_id:  # Invalid code
-                            print("Invalid plate code!")
-                            warnOccupiedPos(pos)
-                            continue
-                        
-                        # Get correct position from API
-                        correct_pos_str = getPos(plate_id)
-                        try:
-                            correct_pos = int(correct_pos_str)
-                        except (ValueError, TypeError):
-                            print(f"Error: {correct_pos_str}")
-                            warnOccupiedPos(pos)
-                            continue
-                        
-                        # Check if position is free
-                        if isOccupied(pos):
-                            print(f"Position {pos} is already occupied!")
-                            warnOccupiedPos(pos)
-                            continue
-                        
-                        # Show correct position if different
-                        if pos != correct_pos:
-                            print(f"Plate should be in position {correct_pos}")
-                            indicateRightPos(correct_pos)
-                            time.sleep(5)  # Give time to see the indication
-                        
-                        # Check final placement
-                        time.sleep(2)  # Wait for possible movement
-                        final_pos = getSwitches()[switch_num]
-                        
-                        if final_pos == 0:  # Plate still there
-                            if pos == correct_pos:
-                                print("Correct position!")
-                                rightPos(pos)
-                                togglePos(pos)  # Update API
-                            else:
-                                print("Wrong position!")
-                                warnWrongPos(correct_pos, pos)
-                                ledsOff()
-                    
-                    # Plate removed (switch deactivated)
-                    else:
-                        print(f"Plate removed from position {pos}")
-                        togglePos(pos)  # Update API
-                        ledsOff()
+            if code == '404':
+                break
                 
-                previous_states = current_states
+            # Obter posição correta da placa
+            platePosition = getPos(code)
             
-            time.sleep(0.1)  # Small delay to prevent CPU overload
-    
+            # Verificar se o código é válido
+            if not platePosition.isdigit() or int(platePosition) < 1 or int(platePosition) > 12:
+                print(f"Código inválido ou placa não encontrada: {platePosition}")
+                warnOccupiedPos(1)  # Usa posição 1 como padrão para erro
+                continue
+                
+            platePosition = int(platePosition)
+            
+            # Verificar se a posição está ocupada
+            if isOccupied(platePosition):
+                print(f"Posição {platePosition} está ocupada!")
+                warnOccupiedPos(platePosition)
+                continue
+                
+            # Indicar posição correta
+            indicateRightPos(platePosition)
+            
+            # Monitorar mudanças nos switches
+            switchesStates = getSwitches()
+            while didntChange(compareSwitches(switchesStates)):
+                time.sleep(0.5)
+                
+            ledsOff()  # Desligar LEDs de indicação
+            
+            # Verificar posicionamento final
+            changed_switches = compareSwitches(switchesStates)
+            positionIsRight = False
+            
+            while not positionIsRight:
+                time.sleep(1)
+                current_states = getSwitches()
+                changed_switches = compareSwitches(switchesStates)
+                
+                if not changed_switches:  # Nenhuma mudança
+                    continue
+                    
+                # Verificar se colocou na posição correta
+                if (int(changed_switches[0]) + 1) == platePosition:
+                    print("Placa colocada na posição correta!")
+                    rightPos(platePosition)
+                    togglePos(platePosition)  # Atualizar estado na API
+                    positionIsRight = True
+                else:
+                    print(f"Placa colocada na posição errada! (Posição {changed_switches[0] + 1})")
+                    warnWrongPos(platePosition, changed_switches[0] + 1)
+                    
+                switchesStates = current_states  # Atualizar estado para próxima verificação
+
     except KeyboardInterrupt:
-        print("\nShutting down system...")
-        ledsOff()
+        print("\nPrograma interrompido pelo usuário.")
+    except Exception as e:
+        print(f"Erro inesperado: {str(e)}")
+    finally:
         GPIO.cleanup()
+        ledsOff()
+        print("Sistema encerrado corretamente.")
         sys.exit(0)
 
 if __name__ == "__main__":
