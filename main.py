@@ -11,6 +11,7 @@ if __name__ == "__main__":
             #Start fan controll in a thread
             tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
             tempChecking.start()
+            startUp()
             while True:
                 
                 code = input()                      # Wait for bar/qr code input

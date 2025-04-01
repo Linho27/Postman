@@ -34,6 +34,7 @@ def color_wipe(strip, color, wait_ms=50):
 def startUp():
     print("Testing LEDs.")
     color_wipe(strip, PURPLE)
+    color_wipe(strip, OFF)
 
 # Turn off every LED on strip
 def ledsOff():
