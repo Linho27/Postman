@@ -34,7 +34,7 @@ if __name__ == "__main__":
                             time.sleep(1)
                             switchesStatesNew = compareSwitches(switchesStates) #Compare old switches states to now
                             print(switchesStatesNew)
-                            if switchesStatesNew[0]+1 == platePosition:           #If position is right
+                            if switchesStatesNew[0] == platePosition - 1:           #If position is right
                                 rightPos(platePosition)                         #Turn on green leds for 10s
                                 positionIsRight = True
                             else:                                               #If position is wrong
