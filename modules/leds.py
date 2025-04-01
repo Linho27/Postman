@@ -48,7 +48,7 @@ def indicateRightPos(rightIndicatorPos):
 
 # Turn on blinking LEDs on occupied plate position
 def warnOccupiedPos(pos):
-    segmentStart, segmentEnd = calcSegment(rightPos)
+    segmentStart, segmentEnd = calcSegment(pos)
     enableSegment(segmentStart, segmentEnd, RED)
     time.sleep(15)
     ledsOff()     
