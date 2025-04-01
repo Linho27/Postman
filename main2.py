@@ -9,10 +9,6 @@ def main():
         print("A aguardar leitura do QR Code...")
         qr_code = input("Insere o código de série da peça: ")
         
-        if not qr_code.isdigit():
-            print("Código inválido!")
-            continue
-        
         pos_correta = getPos(qr_code)
         if isinstance(pos_correta, str):
             print(pos_correta)  # Mensagem de erro
