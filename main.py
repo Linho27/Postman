@@ -43,3 +43,4 @@ if __name__ == "__main__":
         finally:
             GPIO.cleanup()
             ledsOff()
+            print("Programa interrompido sem problemas.")
