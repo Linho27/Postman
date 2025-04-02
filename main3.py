@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3 
 # Sistema completo de gerenciamento de placas com integração de todos os módulos
 
 from modules.fan import *

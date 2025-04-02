@@ -7,7 +7,7 @@ import os
 
 # Defines GPIO pins to be used
 #               1  2  3   4   5   6   7  8   9  10 11 12
-switchesPins = [2, 3, 4, 17, 27, 22, 10, 9, 11, 5, 6, 13]
+switchesPins = [4, 5, 6, 12, 13, 16, 20, 21, 22, 23, 24, 25]
 
 # GPIO pins configuration
 GPIO.setmode(GPIO.BCM)

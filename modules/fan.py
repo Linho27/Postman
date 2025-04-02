@@ -6,7 +6,7 @@ from gpiozero import CPUTemperature         # type: ignore
 from time import sleep
 
 # Pin & MaxTemp definition
-fanPin = 6
+fanPin = 17
 tempLimitMax = 45
 tempLimitMin = 40
 
