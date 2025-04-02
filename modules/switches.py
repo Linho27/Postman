@@ -4,7 +4,7 @@
 import RPi.GPIO as GPIO                     # type: ignore
 import time
 import os 
-from connection import togglePos, isOccupied  # Importa funções para verificar e alternar estado na API
+from modules.connection import togglePos, isOccupied  # Importa funções para verificar e alternar estado na API
 
 # Defines GPIO pins to be used
 #               1  2  3   4   5   6   7  8   9  10 11 12
