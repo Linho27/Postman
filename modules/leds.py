@@ -57,7 +57,7 @@ def deactivate_segment(position: int):
         strip.setPixelColor(led_index, OFF)
     strip.show()
 
-def blink_segment(position: int, color: Color, duration: float = 1.5, blinks: int = 3):
+def blink_segment(position: int, color: Color, duration: float = 4.5, blinks: int = 3):
     """Pisca os LEDs da posição especificada"""
     for _ in range(blinks):
         activate_segment(position, color)
