@@ -5,7 +5,7 @@ from typing import List, Dict
 from modules.connection import togglePos, isOccupied
 
 # Configuração dos pinos (BCM numbering)
-switches_pins = [2, 3, 4, 17, 27, 22, 10, 9, 11, 5, 6, 13]  # Pinos 1-12
+switches_pins = [4, 5, 6, 12, 13, 16, 20, 21, 22, 23, 24, 25]  # Pinos 1-12
 
 # Variável global para controle de inicialização
 _initialized = False
