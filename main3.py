@@ -29,6 +29,8 @@ def main():
             # Verificação de entrada de código (simulado)
             code = input("Aguardando leitura de código QR/Barra (ou digite 404 para sair): ").strip()
             
+            syncSwitchesWithAPI()
+
             if code == '404':
                 break
                 
@@ -95,3 +97,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    
