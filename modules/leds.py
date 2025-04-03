@@ -5,7 +5,7 @@ import time
 from rpi_ws281x import PixelStrip, Color  # type: ignore
 
 # LED strip configuration
-LED_COUNT = 36        # Total de LEDs
+LED_COUNT = 34        # Total de LEDs
 LED_PIN = 18          # GPIO 18 (PWM0)
 LED_FREQ_HZ = 800000  # 800kHz
 LED_DMA = 10          
