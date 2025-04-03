@@ -7,7 +7,7 @@ from modules.connection import togglePos, isOccupied
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(_name_)
+logger = logging.getLogger(__name__)
 
 # Hardware Configuration
 SWITCHES_PINS = {
