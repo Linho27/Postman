@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-# Sistema completo com feedback visual aprimorado para múltiplos switches
+# Sistema de gerenciamento com feedback visual em 3 etapas
 
 from modules.fan import *
 from modules.leds import *
@@ -15,7 +15,7 @@ def main():
         # Inicialização do sistema
         print("Sistema de gerenciamento de placas iniciando...")
         
-        # Controle de temperatura em processo separado
+        # Controle de temperatura
         tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
         tempChecking.start()
         
@@ -23,88 +23,80 @@ def main():
         startUp()
         
         while True:
-            # Estado inicial dos switches
+            # ETAPA 1: Leitura do código e indicação da posição
             previous_states = getSwitches()
-            
-            # Verificação de entrada de código
-            code = input("Aguardando leitura de código QR/Barra (ou digite 404 para sair): ").strip()
+            code = input("Aguardando leitura de código (ou digite 404 para sair): ").strip()
             
             syncSwitchesWithAPI()
 
             if code == '404':
                 break
                 
-            # Obter posição correta da placa
             platePosition = getPos(code)
             
-            # Verificar se o código é válido
             if not platePosition.isdigit() or int(platePosition) < 1 or int(platePosition) > 12:
-                print(f"Código inválido ou placa não encontrada: {platePosition}")
+                print(f"Código inválido: {platePosition}")
                 warnOccupiedPos(1)
                 continue
                 
             platePosition = int(platePosition)
             
-            # Verificar se a posição está ocupada
             if isOccupied(platePosition):
-                print(f"Posição {platePosition} está ocupada!")
+                print(f"Posição {platePosition} ocupada!")
                 warnOccupiedPos(platePosition)
                 continue
                 
-            # Indicar posição correta
+            # Mostra azul para indicar posição correta (ETAPA 1)
             indicateRightPos(platePosition)
+            print(f"Posição correta: {platePosition} (Azul)")
             
-            # Variáveis de estado
-            first_press = True
-            correct_confirmed = False
-            
+            # ETAPA 2: Aguarda pressionamento do switch correto
             while True:
                 current_states = getSwitches()
                 pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                # Primeira pressão correta
-                if platePosition in pressed_switches and first_press:
-                    print("Posição correta pressionada pela primeira vez!")
+                if platePosition in pressed_switches:
+                    # Switch correto pressionado - mostra verde (ETAPA 2)
                     rightPos(platePosition)
                     togglePos(platePosition)
-                    first_press = False
-                    correct_confirmed = True
-                    
-                    # Espera até soltar
-                    while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
-                        time.sleep(0.1)
-                    
-                    print("Switch solto! Aguardando segunda pressão...")
+                    print("Posição confirmada! (Verde)")
+                    break
+                elif pressed_switches:
+                    # Switch errado pressionado
+                    wrong_pos = pressed_switches[0]
+                    warnWrongPos(platePosition, wrong_pos)
+                    print(f"ERRO: Posição {wrong_pos} pressionada!")
+                    time.sleep(2)
                     indicateRightPos(platePosition)  # Volta para azul
                 
-                # Segunda pressão após soltar
-                elif platePosition in pressed_switches and not first_press and correct_confirmed:
-                    print("Posição correta pressionada novamente!")
-                    activate_segment(platePosition, GREEN)  # Verde imediatamente
-                    time.sleep(2)  # Mantém verde por 2 segundos
-                    
-                    # Espera até soltar para finalizar
-                    while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
-                        time.sleep(0.1)
-                    
-                    print("Operação concluída com sucesso!")
-                    break
+                time.sleep(0.1)
+            
+            # ETAPA 3: Monitora se o switch é solto
+            released = False
+            while True:
+                current_states = getSwitches()
+                pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                # Tratamento de erros
-                elif pressed_switches:
-                    # Pressionou posição errada
-                    wrong_positions = [pos for pos in pressed_switches if pos != platePosition]
-                    if wrong_positions:
-                        print(f"Posições erradas pressionadas: {wrong_positions}")
-                        warnWrongPos(platePosition, wrong_positions)
-                
-                # Todos switches soltos após erro
-                elif not pressed_switches and not first_press and not correct_confirmed:
-                    print("ERRO: Switch solto antes da confirmação!")
-                    warnOccupiedPos(platePosition)
-                    break
+                if platePosition not in pressed_switches:
+                    # Switch foi solto - mostra vermelho (ETAPA 3)
+                    if not released:
+                        warnOccupiedPos(platePosition)
+                        print("ERRO: Switch solto! (Vermelho)")
+                        released = True
+                else:
+                    # Switch pressionado novamente após erro
+                    if released:
+                        # Mostra verde novamente quando pressionado após erro
+                        rightPos(platePosition)
+                        print("Correção confirmada! (Verde)")
+                        # Aguarda soltar para finalizar
+                        while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
+                            time.sleep(0.1)
+                        break
                 
                 time.sleep(0.1)
+            
+            print("Operação concluída com sucesso!")
                 
     except KeyboardInterrupt:
         print("\nPrograma interrompido pelo usuário.")
