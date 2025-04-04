@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-# Sistema com feedback vermelho piscante até novo pressionamento
+# Sistema com múltiplos switches simultâneos
 
 from modules.fan import *
 from modules.leds import *
@@ -24,11 +24,8 @@ def main():
         
         while True:
             # ETAPA 1: Leitura do código
-            previous_states = getSwitches()
             code = input("Aguardando leitura de código (ou digite 404 para sair): ").strip()
             
-            syncSwitchesWithAPI()
-
             if code == '404':
                 break
                 
@@ -48,64 +45,65 @@ def main():
                 
             # ETAPA 1: Mostra azul para indicar posição correta
             indicateRightPos(platePosition)
+            print(f"PS-{platePosition:03d}")
             print(f"Posição correta: {platePosition} (Azul)")
             
-            # ETAPA 2: Aguarda pressionamento correto
+            # ETAPA 2: Verificação rápida dos switches
+            correct_confirmed = False
+            blink_processes = []
+            
             while True:
                 current_states = getSwitches()
                 pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                if platePosition in pressed_switches:
-                    # Switch correto pressionado - mostra verde
+                # Verifica se o switch correto está pressionado
+                if platePosition in pressed_switches and not correct_confirmed:
+                    correct_confirmed = True
                     rightPos(platePosition)
                     togglePos(platePosition)
                     print("Posição confirmada! (Verde)")
-                    break
-                elif pressed_switches:
-                    # Switch errado pressionado
-                    wrong_pos = pressed_switches[0]
-                    warnWrongPos(platePosition, wrong_pos)
-                    print(f"ERRO: Posição {wrong_pos} pressionada!")
-                    time.sleep(2)
-                    indicateRightPos(platePosition)  # Volta para azul
                 
-                time.sleep(0.1)
-            
-            # ETAPA 3: Monitora se o switch é solto
-            error_active = False
-            while True:
-                current_states = getSwitches()
-                pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
+                # Verifica switches errados pressionados
+                wrong_switches = [pos for pos in pressed_switches if pos != platePosition]
+                if wrong_switches:
+                    warnWrongPos(platePosition, wrong_switches)
+                    print(f"ERRO: Posições erradas pressionadas: {wrong_switches}")
                 
-                if platePosition not in pressed_switches and not error_active:
-                    # Switch foi solto - começa a piscar vermelho infinitamente
-                    error_active = True
+                # ETAPA 3: Tratamento quando solto após confirmação
+                if correct_confirmed and platePosition not in pressed_switches:
                     print("ERRO: Switch solto! (Vermelho piscante)")
                     
-                    # Processo para piscar infinitamente
-                    def blink_red():
-                        while error_active:
-                            activate_segment(platePosition, RED)
-                            time.sleep(0.5)
-                            deactivate_segment(platePosition)
-                            time.sleep(0.5)
+                    # Inicia piscar vermelho para cada posição necessária
+                    for pos in [platePosition] + wrong_switches:
+                        def blink_red(pos):
+                            while True:
+                                activate_segment(pos, RED)
+                                time.sleep(0.3)
+                                deactivate_segment(pos)
+                                time.sleep(0.3)
+                        
+                        p = multiprocessing.Process(target=blink_red, args=(pos,))
+                        p.start()
+                        blink_processes.append(p)
                     
-                    blink_process = multiprocessing.Process(target=blink_red)
-                    blink_process.start()
-                
-                elif platePosition in pressed_switches and error_active:
-                    # Switch pressionado novamente após erro - para de piscar e mostra verde
-                    error_active = False
-                    blink_process.terminate()
+                    # Aguarda re-pressionamento
+                    while platePosition not in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
+                        time.sleep(0.05)
+                    
+                    # Para todos os processos de piscar
+                    for p in blink_processes:
+                        p.terminate()
+                    blink_processes = []
+                    
                     rightPos(platePosition)
                     print("Switch pressionado novamente! (Verde)")
-                    
-                    # Aguarda soltar para finalizar
-                    while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
-                        time.sleep(0.1)
+                    correct_confirmed = False  # Reinicia o ciclo
+                
+                # Condição de saída - quando solto após confirmação final
+                if correct_confirmed and not any([i+1 for i, state in enumerate(getSwitches()) if state == 0]):
                     break
                 
-                time.sleep(0.1)
+                time.sleep(0.05)
             
             print("Operação concluída com sucesso!")
                 
@@ -116,6 +114,10 @@ def main():
     finally:
         GPIO.cleanup()
         ledsOff()
+        # Garante que todos os processos de piscar sejam terminados
+        for p in multiprocessing.active_children():
+            if p != tempChecking:
+                p.terminate()
         print("Sistema encerrado corretamente.")
         sys.exit(0)
 
