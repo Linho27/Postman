@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-# Sistema com resposta mais rápida ao pressionamento
+# Sistema com feedback vermelho piscante até novo pressionamento
 
 from modules.fan import *
 from modules.leds import *
@@ -24,8 +24,11 @@ def main():
         
         while True:
             # ETAPA 1: Leitura do código
+            previous_states = getSwitches()
             code = input("Aguardando leitura de código (ou digite 404 para sair): ").strip()
             
+            syncSwitchesWithAPI()
+
             if code == '404':
                 break
                 
@@ -45,60 +48,64 @@ def main():
                 
             # ETAPA 1: Mostra azul para indicar posição correta
             indicateRightPos(platePosition)
-            print(f"PS-{platePosition:03d}")  # Formato PS-007
             print(f"Posição correta: {platePosition} (Azul)")
             
-            # ETAPA 2: Verificação mais rápida do switch
-            last_print_time = time.time()
+            # ETAPA 2: Aguarda pressionamento correto
             while True:
                 current_states = getSwitches()
+                pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                # Verificação mais direta e rápida
-                if current_states[platePosition-1] == 0:  # Switch correto pressionado
+                if platePosition in pressed_switches:
+                    # Switch correto pressionado - mostra verde
                     rightPos(platePosition)
                     togglePos(platePosition)
                     print("Posição confirmada! (Verde)")
                     break
+                elif pressed_switches:
+                    # Switch errado pressionado
+                    wrong_pos = pressed_switches[0]
+                    warnWrongPos(platePosition, wrong_pos)
+                    print(f"ERRO: Posição {wrong_pos} pressionada!")
+                    time.sleep(2)
+                    indicateRightPos(platePosition)  # Volta para azul
                 
-                # Feedback periódico da temperatura (sem atrasar o sistema)
-                if time.time() - last_print_time > 2:  # A cada 2 segundos
-                    print(f"Temperatura atual: {CPUTemperature().temperature:.2f}°C")
-                    last_print_time = time.time()
-                
-                time.sleep(0.05)  # Verificação mais frequente (50ms)
+                time.sleep(0.1)
             
             # ETAPA 3: Monitora se o switch é solto
             error_active = False
             while True:
                 current_states = getSwitches()
+                pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                if current_states[platePosition-1] == 1 and not error_active:  # Switch solto
+                if platePosition not in pressed_switches and not error_active:
+                    # Switch foi solto - começa a piscar vermelho infinitamente
                     error_active = True
                     print("ERRO: Switch solto! (Vermelho piscante)")
                     
-                    # Piscar vermelho em processo separado
+                    # Processo para piscar infinitamente
                     def blink_red():
                         while error_active:
                             activate_segment(platePosition, RED)
-                            time.sleep(0.3)
+                            time.sleep(0.5)
                             deactivate_segment(platePosition)
-                            time.sleep(0.3)
+                            time.sleep(0.5)
                     
                     blink_process = multiprocessing.Process(target=blink_red)
                     blink_process.start()
                 
-                elif current_states[platePosition-1] == 0 and error_active:  # Pressionado novamente
+                elif platePosition in pressed_switches and error_active:
+                    # Switch pressionado novamente após erro - para de piscar e mostra verde
                     error_active = False
                     blink_process.terminate()
                     rightPos(platePosition)
                     print("Switch pressionado novamente! (Verde)")
                     
                     # Aguarda soltar para finalizar
-                    while getSwitches()[platePosition-1] == 0:
-                        time.sleep(0.05)
+                    while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
+                        time.sleep(0.1)
                     break
                 
-                time.sleep(0.05)
+                time.sleep(0.1)
             
             print("Operação concluída com sucesso!")
                 
