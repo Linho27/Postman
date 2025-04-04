@@ -22,10 +22,10 @@ def main():
         # Teste inicial dos LEDs
         startUp()
         
-        # Estado inicial dos switches
-        previous_states = getSwitches()
-        
         while True:
+            # Estado inicial dos switches
+            previous_states = getSwitches()
+            
             # Verificação de entrada de código (simulado)
             code = input("Aguardando leitura de código QR/Barra (ou digite 404 para sair): ").strip()
             
@@ -55,40 +55,30 @@ def main():
             indicateRightPos(platePosition)
             
             # Monitorar mudanças nos switches
-            switchesStates = getSwitches()
-            while didntChange(compareSwitches(switchesStates)):
-                time.sleep(0.5)
+            while True:
+                switchesStates = getSwitches()
+                changed_switches = compareSwitches(previous_states)
                 
-            ledsOff()  # Desligar LEDs de indicação
-            
-            # Verificar posicionamento final
-            positionIsRight = False
-            
-            while not positionIsRight:
-                time.sleep(1)
-                current_states = getSwitches()
-                changed_switches = compareSwitches(switchesStates)
+                if changed_switches:  # Se houve mudança nos switches
+                    if (int(changed_switches[0]) + 1) == platePosition:
+                        print("Placa colocada na posição correta!")
+                        rightPos(platePosition)
+                        togglePos(platePosition)  # Atualizar estado na API
+                        
+                        # Agora garantimos que a posição continua pressionada
+                        while getSwitches()[platePosition - 1] == 0:
+                            time.sleep(0.5)  # Espera enquanto o switch está pressionado
+                        
+                        print("Switch solto! Reiniciando validação...")
+                        warnOccupiedPos(platePosition)
+                        break  # Sai do loop para pedir um novo código
+                    else:
+                        print(f"Placa colocada na posição errada! (Posição {changed_switches[0] + 1})")
+                        warnWrongPos(platePosition, changed_switches[0] + 1)
+                        break  # Sai do loop para pedir um novo código
                 
-                if not changed_switches:  # Nenhuma mudança
-                    continue
-                    
-                # Verificar se colocou na posição correta
-                if (int(changed_switches[0]) + 1) == platePosition:
-                    print("Placa colocada na posição correta! Pressione e mantenha o switch pressionado.")
-                    rightPos(platePosition)
-                    
-                    # Garantir que o switch continua pressionado
-                    while getSwitches()[platePosition - 1] == 0:
-                        time.sleep(0.5)
-                    
-                    print("Erro! O switch foi solto. Reiniciando validação...")
-                    warnOccupiedPos(platePosition)
-                else:
-                    print(f"Placa colocada na posição errada! (Posição {changed_switches[0] + 1})")
-                    warnWrongPos(platePosition, changed_switches[0] + 1)
-                    
-                switchesStates = current_states  # Atualizar estado para próxima verificação
-
+                time.sleep(0.5)  # Pequeno atraso para evitar sobrecarga
+                
     except KeyboardInterrupt:
         print("\nPrograma interrompido pelo usuário.")
     except Exception as e:
