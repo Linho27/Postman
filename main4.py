@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-# Sistema com múltiplos códigos e verificação simultânea
+# Sistema com múltiplos códigos e verificação por etapas
 
 from modules.fan import *
 from modules.leds import *
@@ -22,14 +22,14 @@ def main():
         # Teste inicial dos LEDs
         startUp()
         
-        # Dicionário para armazenar códigos escaneados e suas posições
+        # Dicionário para armazenar códigos escaneados
         scanned_codes = {}
         
         while True:
-            # Modo de escaneamento
-            print("\nModo de escaneamento - digite 'fim' para terminar")
+            # FASE 1: Modo de escaneamento
+            print("\nModo de escaneamento - digite 'fim' para verificação")
             while True:
-                code = input("Escanear código QR/Barra (ou 'fim' para verificação): ").strip()
+                code = input("Escanear código QR/Barra: ").strip()
                 
                 if code.lower() == 'fim':
                     if not scanned_codes:
@@ -44,94 +44,79 @@ def main():
                 platePosition = getPos(code)
                 
                 if not platePosition.isdigit() or int(platePosition) < 1 or int(platePosition) > 12:
-                    print(f"Código inválido ou placa não encontrada: {platePosition}")
+                    print(f"Código inválido: {platePosition}")
                     continue
                     
                 platePosition = int(platePosition)
                 
                 if isOccupied(platePosition):
-                    print(f"Posição {platePosition} já está ocupada!")
+                    print(f"Posição {platePosition} ocupada!")
                     continue
                 
                 scanned_codes[code] = platePosition
-                print(f"Código {code} - Posição {platePosition} adicionado")
-                indicateRightPos(platePosition)  # Mostra azul para cada posição escaneada
+                print(f"PS-{platePosition:03d}")
+                indicateRightPos(platePosition)  # Mostra azul para posição escaneada
             
-            # ETAPA DE VERIFICAÇÃO
-            print("\nIniciando verificação de switches...")
-            required_positions = list(scanned_codes.values())
-            print(f"Posições requeridas: {required_positions}")
-            
-            # Variáveis de controle
-            all_confirmed = False
+            # FASE 2: Verificação por etapas
+            print("\nIniciando verificação por etapas...")
+            remaining_positions = list(scanned_codes.values())
             error_processes = []
             
-            while not all_confirmed:
-                current_states = getSwitches()
-                pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
+            while remaining_positions:
+                current_pos = remaining_positions[0]
+                print(f"\nVerificando posição {current_pos}...")
                 
-                # Verifica se todos os requeridos estão pressionados
-                if all(pos in pressed_switches for pos in required_positions):
-                    if not all_confirmed:
-                        # Confirma todas as posições
-                        for pos in required_positions:
-                            rightPos(pos)
-                            togglePos(pos)
-                        print("Todas as posições confirmadas! (Verde)")
-                        all_confirmed = True
+                # Mostra azul para posição atual
+                indicateRightPos(current_pos)
                 
-                # Verifica se algum required foi solto após confirmação
-                elif all_confirmed and any(pos not in pressed_switches for pos in required_positions):
-                    print("ERRO: Alguma posição foi solta! (Vermelho piscante)")
+                # FASE 2.1: Aguarda pressionamento correto
+                pressed = False
+                while not pressed:
+                    current_states = getSwitches()
+                    pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                     
-                    # Inicia piscar vermelho para as posições soltas
-                    for pos in required_positions:
-                        if pos not in pressed_switches:
-                            def blink_red(pos):
-                                while True:
-                                    activate_segment(pos, RED)
-                                    time.sleep(0.3)
-                                    deactivate_segment(pos)
-                                    time.sleep(0.3)
-                            
-                            p = multiprocessing.Process(target=blink_red, args=(pos,))
-                            p.start()
-                            error_processes.append(p)
+                    if current_pos in pressed_switches:
+                        pressed = True
+                        rightPos(current_pos)  # Verde
+                        togglePos(current_pos)
+                        print("Posição confirmada! (Verde)")
+                        
+                        # FASE 2.2: Monitora se é solto
+                        released = False
+                        while True:
+                            current_states = getSwitches()
+                            if current_pos not in [i+1 for i, state in enumerate(current_states) if state == 0]:
+                                released = True
+                                warnOccupiedPos(current_pos)  # Vermelho piscante
+                                print("ERRO: Switch solto! (Vermelho)")
+                                
+                                # FASE 2.3: Aguarda pressionamento novamente
+                                while current_pos not in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
+                                    time.sleep(0.1)
+                                
+                                rightPos(current_pos)  # Verde novamente
+                                print("Switch pressionado novamente! (Verde)")
+                            elif released:
+                                break
+                            time.sleep(0.1)
+                        
+                        # Remove da lista quando confirmado e solto
+                        remaining_positions.pop(0)
+                        break
                     
-                    # Aguarda re-pressionamento
-                    while not all(pos in [i+1 for i, state in enumerate(getSwitches()) if state == 0] 
-                               for pos in required_positions):
-                        time.sleep(0.1)
+                    # Verifica se pressionou posição errada
+                    wrong_positions = [pos for pos in pressed_switches if pos in remaining_positions and pos != current_pos]
+                    if wrong_positions:
+                        warnWrongPos(current_pos, wrong_positions)
+                        print(f"ERRO: Posição errada pressionada: {wrong_positions}")
+                        time.sleep(2)
+                        indicateRightPos(current_pos)  # Volta para azul
                     
-                    # Para os processos de erro e reconfirma
-                    for p in error_processes:
-                        p.terminate()
-                    error_processes = []
-                    
-                    for pos in required_positions:
-                        rightPos(pos)
-                    print("Todas as posições pressionadas novamente! (Verde)")
-                
-                # Verifica posições erradas pressionadas
-                wrong_positions = [pos for pos in pressed_switches if pos not in required_positions]
-                if wrong_positions:
-                    for pos in required_positions:
-                        warnWrongPos(pos, wrong_positions)
-                    print(f"ERRO: Posições incorretas pressionadas: {wrong_positions}")
-                    time.sleep(2)
-                    for pos in required_positions:
-                        indicateRightPos(pos)  # Volta para azul
-                
-                time.sleep(0.1)
+                    time.sleep(0.1)
             
-            # Espera até todos serem soltos para finalizar
-            print("Aguardando soltar todos os switches...")
-            while any(state == 0 for state in getSwitches()):
-                time.sleep(0.1)
-            
-            print("Operação concluída com sucesso!")
+            print("\nTodas as posições verificadas com sucesso!")
             scanned_codes = {}  # Reseta para nova operação
-                
+            
     except KeyboardInterrupt:
         print("\nPrograma interrompido pelo usuário.")
     except Exception as e:
