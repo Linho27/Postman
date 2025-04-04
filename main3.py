@@ -65,7 +65,7 @@ def main():
                     print(f"Temperatura atual: {CPUTemperature().temperature:.2f}°C")
                     last_print_time = time.time()
                 
-                time.sleep(0.01)  # Verificação mais frequente (10ms)
+                time.sleep(0.05)  # Verificação mais frequente (50ms)
             
             # ETAPA 3: Monitora se o switch é solto
             error_active = False
@@ -95,10 +95,10 @@ def main():
                     
                     # Aguarda soltar para finalizar
                     while getSwitches()[platePosition-1] == 0:
-                        time.sleep(0.01)
+                        time.sleep(0.05)
                     break
                 
-                time.sleep(0.01)
+                time.sleep(0.05)
             
             print("Operação concluída com sucesso!")
                 
