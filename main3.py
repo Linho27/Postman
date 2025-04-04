@@ -65,7 +65,7 @@ def main():
                     print(f"Temperatura atual: {CPUTemperature().temperature:.2f}°C")
                     last_print_time = time.time()
                 
-                time.sleep(0.01)  # Verificação ultra frequente (10ms)
+                time.sleep(0.01)  # Verificação mais frequente (10ms)
             
             # ETAPA 3: Monitora se o switch é solto
             error_active = False
@@ -111,3 +111,6 @@ def main():
         ledsOff()
         print("Sistema encerrado corretamente.")
         sys.exit(0)
+
+if __name__ == "__main__":
+    main()
