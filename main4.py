@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3  
 # Sistema com detecção automática de pressionamento múltiplo
 
 from modules.fan import *
@@ -9,6 +9,7 @@ import RPi.GPIO as GPIO                     # type: ignore
 import multiprocessing
 import time
 import sys
+import select  # Import necessário para usar select.select
 
 def main():
     try:
