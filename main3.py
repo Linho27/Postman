@@ -10,75 +10,80 @@ import multiprocessing
 import time
 import sys
 
-def monitor_switches(shared_pressed):
-    """Monitorar switches pressionados em tempo real"""
-    print("Monitoramento de switches iniciado...")
-    while True:
-        current_states = getSwitches()
-        for pos in range(12):
-            if current_states[pos] == 0:  # Pressionado
-                shared_pressed[pos] = True
-            else:
-                if shared_pressed.get(pos):
-                    print(f"Switch da posição {pos+1} foi solto!")
-                    warnOccupiedPos(pos+1)
-                    shared_pressed[pos] = False
-        time.sleep(0.2)
-
 def main():
     try:
+        # Inicialização do sistema
         print("Sistema de gerenciamento de placas iniciando...")
-
-        # Gerenciador para memória compartilhada entre processos
-        manager = multiprocessing.Manager()
-        pressed_positions = manager.dict()
-
-        # Processo 1: Verificação da temperatura
+        
+        # Controle de temperatura em processo separado
         tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
         tempChecking.start()
-
-        # Processo 2: Monitoramento contínuo dos switches
-        switch_monitor = multiprocessing.Process(target=monitor_switches, args=(pressed_positions,), daemon=True)
-        switch_monitor.start()
-
+        
         # Teste inicial dos LEDs
         startUp()
-
+        
+        # Estado inicial dos switches
+        previous_states = getSwitches()
+        
         while True:
+            # Verificação de entrada de código (simulado)
             code = input("Aguardando leitura de código QR/Barra (ou digite 404 para sair): ").strip()
-            if code == '404':
-                break
-
+            
             syncSwitchesWithAPI()
 
-            # Obter posição correta da placa via API
+            if code == '404':
+                break
+                
+            # Obter posição correta da placa
             platePosition = getPos(code)
+            
+            # Verificar se o código é válido
             if not platePosition.isdigit() or int(platePosition) < 1 or int(platePosition) > 12:
                 print(f"Código inválido ou placa não encontrada: {platePosition}")
-                warnOccupiedPos(1)
+                warnOccupiedPos(1)  # Usa posição 1 como padrão para erro
                 continue
-
+                
             platePosition = int(platePosition)
-
+            
+            # Verificar se a posição está ocupada
             if isOccupied(platePosition):
                 print(f"Posição {platePosition} está ocupada!")
                 warnOccupiedPos(platePosition)
                 continue
-
+                
+            # Indicar posição correta
             indicateRightPos(platePosition)
-
-            print(f"Aguardando colocação da placa na posição {platePosition}...")
-
-            # Espera até o switch da posição correta ser pressionado
-            while True:
-                switches = getSwitches()
-                if switches[platePosition - 1] == 0:
-                    print("Placa colocada corretamente!")
+            
+            # Monitorar mudanças nos switches
+            switchesStates = getSwitches()
+            while didntChange(compareSwitches(switchesStates)):
+                time.sleep(0.5)
+                
+            ledsOff()  # Desligar LEDs de indicação
+            
+            # Verificar posicionamento final
+            changed_switches = compareSwitches(switchesStates)
+            positionIsRight = False
+            
+            while not positionIsRight:
+                time.sleep(1)
+                current_states = getSwitches()
+                changed_switches = compareSwitches(switchesStates)
+                
+                if not changed_switches:  # Nenhuma mudança
+                    continue
+                    
+                # Verificar se colocou na posição correta
+                if (int(changed_switches[0]) + 1) == platePosition:
+                    print("Placa colocada na posição correta!")
                     rightPos(platePosition)
-                    togglePos(platePosition)
-                    pressed_positions[platePosition - 1] = True
-                    break
-                time.sleep(0.2)
+                    togglePos(platePosition)  # Atualizar estado na API
+                    positionIsRight = True
+                else:
+                    print(f"Placa colocada na posição errada! (Posição {changed_switches[0] + 1})")
+                    warnWrongPos(platePosition, changed_switches[0] + 1)
+                    
+                switchesStates = current_states  # Atualizar estado para próxima verificação
 
     except KeyboardInterrupt:
         print("\nPrograma interrompido pelo usuário.")
@@ -92,3 +97,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    
