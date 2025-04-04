@@ -1,15 +1,3 @@
-#!/usr/bin/env python3 
-# Sistema com resposta mais rápida ao pressionamento
-
-from modules.fan import *
-from modules.leds import *
-from modules.switches import *
-from modules.connection import *
-import RPi.GPIO as GPIO                     # type: ignore
-import multiprocessing
-import time
-import sys
-
 def main():
     try:
         # Inicialização do sistema
@@ -65,7 +53,7 @@ def main():
                     print(f"Temperatura atual: {CPUTemperature().temperature:.2f}°C")
                     last_print_time = time.time()
                 
-                time.sleep(0.05)  # Verificação mais frequente (50ms)
+                time.sleep(0.01)  # Verificação ultra frequente (10ms)
             
             # ETAPA 3: Monitora se o switch é solto
             error_active = False
@@ -95,10 +83,10 @@ def main():
                     
                     # Aguarda soltar para finalizar
                     while getSwitches()[platePosition-1] == 0:
-                        time.sleep(0.05)
+                        time.sleep(0.01)
                     break
                 
-                time.sleep(0.05)
+                time.sleep(0.01)
             
             print("Operação concluída com sucesso!")
                 
@@ -111,6 +99,3 @@ def main():
         ledsOff()
         print("Sistema encerrado corretamente.")
         sys.exit(0)
-
-if __name__ == "__main__":
-    main()
