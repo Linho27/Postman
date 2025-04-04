@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-# Sistema de gerenciamento com feedback visual em 3 etapas
+# Sistema com feedback vermelho piscante até novo pressionamento
 
 from modules.fan import *
 from modules.leds import *
@@ -23,7 +23,7 @@ def main():
         startUp()
         
         while True:
-            # ETAPA 1: Leitura do código e indicação da posição
+            # ETAPA 1: Leitura do código
             previous_states = getSwitches()
             code = input("Aguardando leitura de código (ou digite 404 para sair): ").strip()
             
@@ -46,17 +46,17 @@ def main():
                 warnOccupiedPos(platePosition)
                 continue
                 
-            # Mostra azul para indicar posição correta (ETAPA 1)
+            # ETAPA 1: Mostra azul para indicar posição correta
             indicateRightPos(platePosition)
             print(f"Posição correta: {platePosition} (Azul)")
             
-            # ETAPA 2: Aguarda pressionamento do switch correto
+            # ETAPA 2: Aguarda pressionamento correto
             while True:
                 current_states = getSwitches()
                 pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
                 if platePosition in pressed_switches:
-                    # Switch correto pressionado - mostra verde (ETAPA 2)
+                    # Switch correto pressionado - mostra verde
                     rightPos(platePosition)
                     togglePos(platePosition)
                     print("Posição confirmada! (Verde)")
@@ -72,27 +72,38 @@ def main():
                 time.sleep(0.1)
             
             # ETAPA 3: Monitora se o switch é solto
-            released = False
+            error_active = False
             while True:
                 current_states = getSwitches()
                 pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                if platePosition not in pressed_switches:
-                    # Switch foi solto - mostra vermelho (ETAPA 3)
-                    if not released:
-                        warnOccupiedPos(platePosition)
-                        print("ERRO: Switch solto! (Vermelho)")
-                        released = True
-                else:
-                    # Switch pressionado novamente após erro
-                    if released:
-                        # Mostra verde novamente quando pressionado após erro
-                        rightPos(platePosition)
-                        print("Correção confirmada! (Verde)")
-                        # Aguarda soltar para finalizar
-                        while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
-                            time.sleep(0.1)
-                        break
+                if platePosition not in pressed_switches and not error_active:
+                    # Switch foi solto - começa a piscar vermelho infinitamente
+                    error_active = True
+                    print("ERRO: Switch solto! (Vermelho piscante)")
+                    
+                    # Processo para piscar infinitamente
+                    def blink_red():
+                        while error_active:
+                            activate_segment(platePosition, RED)
+                            time.sleep(0.5)
+                            deactivate_segment(platePosition)
+                            time.sleep(0.5)
+                    
+                    blink_process = multiprocessing.Process(target=blink_red)
+                    blink_process.start()
+                
+                elif platePosition in pressed_switches and error_active:
+                    # Switch pressionado novamente após erro - para de piscar e mostra verde
+                    error_active = False
+                    blink_process.terminate()
+                    rightPos(platePosition)
+                    print("Switch pressionado novamente! (Verde)")
+                    
+                    # Aguarda soltar para finalizar
+                    while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
+                        time.sleep(0.1)
+                    break
                 
                 time.sleep(0.1)
             
