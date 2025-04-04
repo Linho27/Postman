@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3
 # Sistema completo de gerenciamento de placas com integração de todos os módulos
 
 from modules.fan import *
@@ -60,30 +60,31 @@ def main():
                 changed_switches = compareSwitches(previous_states)
                 
                 if changed_switches:  # Se houve mudança nos switches
-                    if (int(changed_switches[0]) + 1) == platePosition:
+                    all_switches_correct = True
+                    for switch in changed_switches:
+                        if (int(switch) + 1) != platePosition:
+                            print(f"Placa colocada na posição errada! (Posição {switch + 1})")
+                            warnWrongPos(platePosition, switch + 1)
+                            all_switches_correct = False
+                    
+                    if all_switches_correct:
                         print("Placa colocada na posição correta!")
                         rightPos(platePosition)
                         togglePos(platePosition)  # Atualizar estado na API
                         
                         # Agora garantimos que a posição continua pressionada
-                        while getSwitches()[platePosition - 1] == 0:
+                        while any(switch == 0 for switch in getSwitches()):  # Verifica se algum switch está solto
                             time.sleep(0.5)  # Espera enquanto o switch está pressionado
                         
-                        # Quando o switch é solto, continua a dar erro até ser pressionado novamente
-                        print("Switch solto! Erro até ser pressionado novamente.")
-                        warnOccupiedPos(platePosition)
-                        while getSwitches()[platePosition - 1] == 1:
-                            time.sleep(0.5)  # Aguarda até o switch ser pressionado novamente
-                        
-                        print("Switch pressionado novamente! Pode continuar.")
+                        print("Todos os switches pressionados novamente! Pode continuar.")
                         break  # Sai do loop para pedir um novo código
-                    else:
-                        print(f"Placa colocada na posição errada! (Posição {changed_switches[0] + 1})")
-                        warnWrongPos(platePosition, changed_switches[0] + 1)
-                        break  # Sai do loop para pedir um novo código
+                else:
+                    print(f"Erro! Não foi pressionado nenhum switch corretamente.")
+                    warnOccupiedPos(platePosition)
+                    time.sleep(0.5)  # Atraso para não sobrecarregar a CPU
                 
                 time.sleep(0.5)  # Pequeno atraso para evitar sobrecarga
-                
+
     except KeyboardInterrupt:
         print("\nPrograma interrompido pelo usuário.")
     except Exception as e:
