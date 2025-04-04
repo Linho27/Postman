@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-# Sistema com feedback vermelho persistente até novo pressionamento
+# Sistema com feedback vermelho piscante até novo pressionamento
 
 from modules.fan import *
 from modules.leds import *
@@ -72,20 +72,31 @@ def main():
                 time.sleep(0.1)
             
             # ETAPA 3: Monitora se o switch é solto
+            error_active = False
             while True:
                 current_states = getSwitches()
                 pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                if platePosition not in pressed_switches:
-                    # Switch foi solto - mostra vermelho PERMANENTEMENTE
-                    activate_segment(platePosition, RED)
-                    print("ERRO: Switch solto! (Vermelho permanente)")
+                if platePosition not in pressed_switches and not error_active:
+                    # Switch foi solto - começa a piscar vermelho infinitamente
+                    error_active = True
+                    print("ERRO: Switch solto! (Vermelho piscante)")
                     
-                    # Fica esperando até ser pressionado novamente
-                    while platePosition not in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
-                        time.sleep(0.1)
+                    # Processo para piscar infinitamente
+                    def blink_red():
+                        while error_active:
+                            activate_segment(platePosition, RED)
+                            time.sleep(0.5)
+                            deactivate_segment(platePosition)
+                            time.sleep(0.5)
                     
-                    # Quando pressionado novamente, mostra verde
+                    blink_process = multiprocessing.Process(target=blink_red)
+                    blink_process.start()
+                
+                elif platePosition in pressed_switches and error_active:
+                    # Switch pressionado novamente após erro - para de piscar e mostra verde
+                    error_active = False
+                    blink_process.terminate()
                     rightPos(platePosition)
                     print("Switch pressionado novamente! (Verde)")
                     
