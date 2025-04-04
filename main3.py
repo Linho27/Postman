@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-# Sistema completo de gerenciamento de placas com múltiplos switches simultâneos
+# Sistema completo com feedback visual aprimorado para múltiplos switches
 
 from modules.fan import *
 from modules.leds import *
@@ -40,7 +40,7 @@ def main():
             # Verificar se o código é válido
             if not platePosition.isdigit() or int(platePosition) < 1 or int(platePosition) > 12:
                 print(f"Código inválido ou placa não encontrada: {platePosition}")
-                warnOccupiedPos(1)  # Usa posição 1 como padrão para erro
+                warnOccupiedPos(1)
                 continue
                 
             platePosition = int(platePosition)
@@ -54,52 +54,58 @@ def main():
             # Indicar posição correta
             indicateRightPos(platePosition)
             
-            # Variáveis para controle de estado
-            correct_pressed = False
-            required_switches = [platePosition]  # Pode ser expandido para múltiplas posições necessárias
-            pressed_history = []
+            # Variáveis de estado
+            first_press = True
+            correct_confirmed = False
             
-            # Monitorar mudanças nos switches
             while True:
                 current_states = getSwitches()
                 pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                # Verifica se todos os switches necessários estão pressionados
-                if all(pos in pressed_switches for pos in required_switches):
-                    if not correct_pressed:
-                        print("Todos os switches necessários pressionados corretamente!")
-                        rightPos(platePosition)
-                        togglePos(platePosition)
-                        correct_pressed = True
+                # Primeira pressão correta
+                if platePosition in pressed_switches and first_press:
+                    print("Posição correta pressionada pela primeira vez!")
+                    rightPos(platePosition)
+                    togglePos(platePosition)
+                    first_press = False
+                    correct_confirmed = True
                     
-                    # Monitora se algum switch necessário foi solto
-                    if any(pos not in pressed_switches for pos in required_switches):
-                        print("ERRO: Switch necessário foi solto!")
-                        for pos in required_switches:
-                            if pos not in pressed_switches:
-                                blink_segment(pos, RED, duration=0.5, blinks=1)
+                    # Espera até soltar
+                    while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
+                        time.sleep(0.1)
+                    
+                    print("Switch solto! Aguardando segunda pressão...")
+                    indicateRightPos(platePosition)  # Volta para azul
                 
-                # Verifica se switches errados foram pressionados
-                wrong_switches = [pos for pos in pressed_switches if pos not in required_switches]
-                if wrong_switches and wrong_switches != pressed_history:
-                    print(f"Switches errados pressionados: {wrong_switches}")
-                    warnWrongPos(platePosition, wrong_switches)
+                # Segunda pressão após soltar
+                elif platePosition in pressed_switches and not first_press and correct_confirmed:
+                    print("Posição correta pressionada novamente!")
+                    activate_segment(platePosition, GREEN)  # Verde imediatamente
+                    time.sleep(2)  # Mantém verde por 2 segundos
+                    
+                    # Espera até soltar para finalizar
+                    while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
+                        time.sleep(0.1)
+                    
+                    print("Operação concluída com sucesso!")
+                    break
                 
-                # Verifica se todos os switches foram soltos após terem sido pressionados
-                if not pressed_switches and pressed_history:
-                    print("ERRO: Todos os switches foram soltos!")
+                # Tratamento de erros
+                elif pressed_switches:
+                    # Pressionou posição errada
+                    wrong_positions = [pos for pos in pressed_switches if pos != platePosition]
+                    if wrong_positions:
+                        print(f"Posições erradas pressionadas: {wrong_positions}")
+                        warnWrongPos(platePosition, wrong_positions)
+                
+                # Todos switches soltos após erro
+                elif not pressed_switches and not first_press and not correct_confirmed:
+                    print("ERRO: Switch solto antes da confirmação!")
                     warnOccupiedPos(platePosition)
                     break
                 
-                # Atualiza histórico e espera próxima verificação
-                pressed_history = pressed_switches.copy()
                 time.sleep(0.1)
                 
-                # Condição de saída quando correto e solto
-                if correct_pressed and not pressed_switches:
-                    print("Operação concluída com sucesso!")
-                    break
-                    
     except KeyboardInterrupt:
         print("\nPrograma interrompido pelo usuário.")
     except Exception as e:
