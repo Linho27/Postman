@@ -34,6 +34,7 @@ PURPLE = Color(160, 32, 240)
 RED = Color(255, 0, 0)
 GREEN = Color(0, 255, 0)
 BLUE = Color(0, 0, 255)
+WHITE = Color(255, 255, 255)
 
 # Inicialização da fita LED
 strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
@@ -77,7 +78,7 @@ def warnOccupiedPos(pos):
 def warnWrongPos(right_pos, wrong_pos):
     """Indica posição errada e correta"""
     for _ in range(6):  # 3 piscadas
-        activate_segment(right_pos, GREEN)
+        activate_segment(right_pos, WHITE)
         activate_segment(wrong_pos, RED)
         time.sleep(0.25)
         deactivate_segment(right_pos)
