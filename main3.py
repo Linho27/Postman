@@ -62,7 +62,6 @@ def main():
             ledsOff()  # Desligar LEDs de indicação
             
             # Verificar posicionamento final
-            changed_switches = compareSwitches(switchesStates)
             positionIsRight = False
             
             while not positionIsRight:
@@ -75,10 +74,15 @@ def main():
                     
                 # Verificar se colocou na posição correta
                 if (int(changed_switches[0]) + 1) == platePosition:
-                    print("Placa colocada na posição correta!")
+                    print("Placa colocada na posição correta! Pressione e mantenha o switch pressionado.")
                     rightPos(platePosition)
-                    togglePos(platePosition)  # Atualizar estado na API
-                    positionIsRight = True
+                    
+                    # Garantir que o switch continua pressionado
+                    while getSwitches()[platePosition - 1] == 0:
+                        time.sleep(0.5)
+                    
+                    print("Erro! O switch foi solto. Reiniciando validação...")
+                    warnOccupiedPos(platePosition)
                 else:
                     print(f"Placa colocada na posição errada! (Posição {changed_switches[0] + 1})")
                     warnWrongPos(platePosition, changed_switches[0] + 1)
@@ -97,5 +101,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-    
