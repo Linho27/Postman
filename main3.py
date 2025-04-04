@@ -21,7 +21,11 @@ def monitor_switches(shared_pressed):
             else:
                 if shared_pressed.get(pos):
                     print(f"Switch da posição {pos+1} foi solto!")
-                    warnOccupiedPos(pos+1)
+
+                    # Iniciar LED de erro em processo paralelo
+                    p = multiprocessing.Process(target=warnOccupiedPos, args=(pos+1,), daemon=True)
+                    p.start()
+
                     shared_pressed[pos] = False
         time.sleep(0.2)
 
@@ -53,7 +57,7 @@ def main():
 
             # Obter posição correta da placa via API
             platePosition = getPos(code)
-            if not platePosition.isdigit() or int(platePosition) < 1 or int(platePosition) > 12:
+            if not str(platePosition).isdigit() or int(platePosition) < 1 or int(platePosition) > 12:
                 print(f"Código inválido ou placa não encontrada: {platePosition}")
                 warnOccupiedPos(1)
                 continue
