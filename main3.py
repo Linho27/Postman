@@ -69,8 +69,13 @@ def main():
                         while getSwitches()[platePosition - 1] == 0:
                             time.sleep(0.5)  # Espera enquanto o switch está pressionado
                         
-                        print("Switch solto! Reiniciando validação...")
+                        # Quando o switch é solto, continua a dar erro até ser pressionado novamente
+                        print("Switch solto! Erro até ser pressionado novamente.")
                         warnOccupiedPos(platePosition)
+                        while getSwitches()[platePosition - 1] == 1:
+                            time.sleep(0.5)  # Aguarda até o switch ser pressionado novamente
+                        
+                        print("Switch pressionado novamente! Pode continuar.")
                         break  # Sai do loop para pedir um novo código
                     else:
                         print(f"Placa colocada na posição errada! (Posição {changed_switches[0] + 1})")
