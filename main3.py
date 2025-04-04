@@ -1,3 +1,15 @@
+#!/usr/bin/env python3 
+# Sistema com resposta mais rápida ao pressionamento
+
+from modules.fan import *
+from modules.leds import *
+from modules.switches import *
+from modules.connection import *
+import RPi.GPIO as GPIO                     # type: ignore
+import multiprocessing
+import time
+import sys
+
 def main():
     try:
         # Inicialização do sistema
