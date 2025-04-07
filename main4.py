@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-# Sistema com detecção automática sem select.select
+# Sistema com feedback vermelho piscante até novo pressionamento
 
 from modules.fan import *
 from modules.leds import *
@@ -9,130 +9,115 @@ import RPi.GPIO as GPIO                     # type: ignore
 import multiprocessing
 import time
 import sys
-import fcntl
-import os
-
-def set_non_blocking(fd):
-    """Configura um file descriptor para non-blocking"""
-    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
 
 def main():
     try:
-        # Configura stdin para non-blocking
-        set_non_blocking(sys.stdin.fileno())
+        # Inicialização do sistema
+        print("Sistema de gerenciamento de placas iniciando...")
         
-        # Inicialização
-        print("Sistema de gerenciamento iniciando...")
+        # Controle de temperatura
         tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
         tempChecking.start()
+        
+        # Teste inicial dos LEDs
         startUp()
         
-        scanned_positions = []
-        blink_processes = []
-        
         while True:
-            # Modo de escaneamento ativo
-            print("\nModo de escaneamento ativo")
-            print("Pressione todos os switches escaneados para verificação")
+            # ETAPA 1: Leitura do código
+            previous_states = getSwitches()
+            code = input("Aguardando leitura de código (ou digite 404 para sair): ").strip()
             
+            syncSwitchesWithAPI()
+
+            if code == '404':
+                break
+                
+            platePosition = getPos(code)
+            
+            if not platePosition.isdigit() or int(platePosition) < 1 or int(platePosition) > 12:
+                print(f"Código inválido: {platePosition}")
+                warnOccupiedPos(1)
+                continue
+                
+            platePosition = int(platePosition)
+            
+            if isOccupied(platePosition):
+                print(f"Posição {platePosition} ocupada!")
+                warnOccupiedPos(platePosition)
+                continue
+                
+            # ETAPA 1: Mostra azul para indicar posição correta
+            indicateRightPos(platePosition)
+            print(f"Posição correta: {platePosition} (Azul)")
+            
+            # ETAPA 2: Aguarda pressionamento correto
             while True:
-                # Verifica se todos os escaneados estão pressionados
                 current_states = getSwitches()
-                pressed = [i+1 for i, state in enumerate(current_states) if state == 0]
+                pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                if scanned_positions and all(pos in pressed for pos in scanned_positions):
-                    print("Todos os switches escaneados pressionados! Iniciando verificação...")
-                    time.sleep(0.5)  # Debounce
+                if platePosition in pressed_switches:
+                    # Switch correto pressionado - mostra verde
+                    rightPos(platePosition)
+                    togglePos(platePosition)
+                    print("Posição confirmada! (Verde)")
                     break
-                
-                # Verifica novo código (non-blocking)
-                try:
-                    code = sys.stdin.readline().strip()
-                    if code:
-                        pos = getPos(code)
-                        
-                        if not pos.isdigit() or int(pos) < 1 or int(pos) > 12:
-                            print(f"Código inválido: {pos}")
-                            continue
-                            
-                        pos = int(pos)
-                        
-                        if pos in scanned_positions:
-                            print(f"Posição {pos} já escaneada!")
-                            continue
-                            
-                        if isOccupied(pos):
-                            print(f"Posição {pos} ocupada!")
-                            continue
-                            
-                        scanned_positions.append(pos)
-                        indicateRightPos(pos)
-                        print(f"PS-{pos:03d} adicionado. Posições ativas: {scanned_positions}")
-                except IOError:
-                    pass  # Não há input disponível
+                elif pressed_switches:
+                    # Switch errado pressionado
+                    wrong_pos = pressed_switches[0]
+                    warnWrongPos(platePosition, wrong_pos)
+                    print(f"ERRO: Posição {wrong_pos} pressionada!")
+                    time.sleep(2)
+                    indicateRightPos(platePosition)  # Volta para azul
                 
                 time.sleep(0.1)
             
-            # Fase de verificação
-            print("\nFase de verificação iniciada")
-            
-            for pos in scanned_positions.copy():
-                print(f"\nVerificando posição {pos}...")
-                indicateRightPos(pos)
+            # ETAPA 3: Monitora se o switch é solto
+            error_active = False
+            while True:
+                current_states = getSwitches()
+                pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                confirmed = False
-                while not confirmed:
-                    current_states = getSwitches()
-                    pressed = [i+1 for i, state in enumerate(current_states) if state == 0]
+                if platePosition not in pressed_switches and not error_active:
+                    # Switch foi solto - começa a piscar vermelho infinitamente
+                    error_active = True
+                    print("ERRO: Switch solto! (Vermelho piscante)")
                     
-                    if pos in pressed:
-                        rightPos(pos)
-                        togglePos(pos)
-                        print("Posição confirmada! (Verde)")
-                        
-                        # Monitora se é solto
-                        while True:
-                            current_states = getSwitches()
-                            if pos not in [i+1 for i, state in enumerate(current_states) if state == 0]:
-                                # Pisca vermelho até pressionar novamente
-                                print("ERRO: Switch solto! (Vermelho piscante)")
-                                p = multiprocessing.Process(target=blink_segment, args=(pos, RED, 0, 0))
-                                p.start()
-                                blink_processes.append(p)
-                                
-                                while pos not in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
-                                    time.sleep(0.1)
-                                
-                                for p in blink_processes:
-                                    p.terminate()
-                                blink_processes = []
-                                
-                                rightPos(pos)
-                                print("Correção confirmada! (Verde)")
-                            else:
-                                break
-                            time.sleep(0.1)
-                        
-                        scanned_positions.remove(pos)
-                        confirmed = True
-                        break
+                    # Processo para piscar infinitamente
+                    def blink_red():
+                        while error_active:
+                            activate_segment(platePosition, RED)
+                            time.sleep(0.5)
+                            deactivate_segment(platePosition)
+                            time.sleep(0.5)
                     
-                    time.sleep(0.1)
+                    blink_process = multiprocessing.Process(target=blink_red)
+                    blink_process.start()
+                
+                elif platePosition in pressed_switches and error_active:
+                    # Switch pressionado novamente após erro - para de piscar e mostra verde
+                    error_active = False
+                    blink_process.terminate()
+                    rightPos(platePosition)
+                    print("Switch pressionado novamente! (Verde)")
+                    
+                    # Aguarda soltar para finalizar
+                    while platePosition in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
+                        time.sleep(0.1)
+                    break
+                
+                time.sleep(0.1)
             
-            print("\nTodas as posições verificadas com sucesso!")
-            scanned_positions = []
-            
+            print("Operação concluída com sucesso!")
+                
     except KeyboardInterrupt:
-        print("\nPrograma interrompido")
+        print("\nPrograma interrompido pelo usuário.")
     except Exception as e:
-        print(f"Erro: {str(e)}")
+        print(f"Erro inesperado: {str(e)}")
     finally:
         GPIO.cleanup()
         ledsOff()
-        for p in multiprocessing.active_children():
-            p.terminate()
-        print("Sistema encerrado")
+        print("Sistema encerrado corretamente.")
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
