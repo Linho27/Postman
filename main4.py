@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 
-# Sistema com múltiplos códigos e verificação por etapas (sem necessidade de digitar 'fim')
+# Sistema com múltiplos códigos e verificação por etapas (pisca vermelho até voltar a pressionar)
 
 from modules.fan import *
 from modules.leds import *
@@ -10,6 +10,13 @@ import multiprocessing
 import time
 import sys
 import select
+
+def piscar_vermelho(pos, flag):
+    while flag.is_set():
+        activate_segment(pos, RED)
+        time.sleep(0.3)
+        deactivate_segment(pos)
+        time.sleep(0.3)
 
 def main():
     try:
@@ -25,17 +32,14 @@ def main():
         while True:
             print("\nModo de escaneamento (pressione todos os switches para iniciar verificação)")
             while True:
-                # Verifica switches pressionados
                 current_states = getSwitches()
                 pressed_positions = [i+1 for i, state in enumerate(current_states) if state == 0]
                 
-                # Se todos os escaneados estiverem pressionados, inicia verificação
                 if scanned_codes and all(pos in pressed_positions for pos in scanned_codes.values()):
                     print("Todos os switches escaneados pressionados! Iniciando verificação...")
                     time.sleep(0.5)
                     break
 
-                # Verifica se há código digitado
                 if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                     code = sys.stdin.readline().strip()
                     
@@ -62,7 +66,6 @@ def main():
                 
                 time.sleep(0.1)
 
-            # FASE DE VERIFICAÇÃO
             print("\nIniciando verificação por etapas...")
             remaining_positions = list(scanned_codes.values())
 
@@ -82,28 +85,33 @@ def main():
                         togglePos(current_pos)
                         print("Posição confirmada! (Verde)")
                         
-                        # Verifica se é solto incorretamente
-                        released = False
+                        # Monitorar se é solto e piscar vermelho até pressionar novamente
+                        released_flag = multiprocessing.Event()
+                        released_flag.set()
+                        blink_proc = multiprocessing.Process(target=piscar_vermelho, args=(current_pos, released_flag))
+                        
                         while True:
                             current_states = getSwitches()
-                            if current_pos not in [i+1 for i, state in enumerate(current_states) if state == 0]:
-                                released = True
-                                warnOccupiedPos(current_pos)
-                                print("ERRO: Switch solto! (Vermelho)")
+                            pressed_now = [i+1 for i, state in enumerate(current_states) if state == 0]
+                            
+                            if current_pos not in pressed_now:
+                                print("ERRO: Switch solto! (Vermelho piscante)")
+                                blink_proc.start()
                                 
                                 while current_pos not in [i+1 for i, state in enumerate(getSwitches()) if state == 0]:
                                     time.sleep(0.1)
                                 
+                                released_flag.clear()
+                                blink_proc.terminate()
                                 rightPos(current_pos)
                                 print("Switch pressionado novamente! (Verde)")
-                            elif released:
                                 break
+                            
                             time.sleep(0.1)
                         
                         remaining_positions.pop(0)
                         break
                     
-                    # Pressão errada
                     wrong_positions = [pos for pos in pressed_switches if pos in remaining_positions and pos != current_pos]
                     if wrong_positions:
                         warnWrongPos(current_pos, wrong_positions)
