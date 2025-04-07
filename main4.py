@@ -1,5 +1,5 @@
-#!/usr/bin/env python3 
-# Sistema com detecção automática sem select.select
+#!/usr/bin/env python3  
+# Sistema com detecção automática de pressionamento múltiplo
 
 from modules.fan import *
 from modules.leds import *
@@ -9,19 +9,10 @@ import RPi.GPIO as GPIO                     # type: ignore
 import multiprocessing
 import time
 import sys
-import fcntl
-import os
-
-def set_non_blocking(fd):
-    """Configura um file descriptor para non-blocking"""
-    flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+import select  # Import necessário para usar select.select
 
 def main():
     try:
-        # Configura stdin para non-blocking
-        set_non_blocking(sys.stdin.fileno())
-        
         # Inicialização
         print("Sistema de gerenciamento iniciando...")
         tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
@@ -46,31 +37,32 @@ def main():
                     time.sleep(0.5)  # Debounce
                     break
                 
-                # Verifica novo código (non-blocking)
-                try:
+                # Verifica novo código
+                if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                     code = sys.stdin.readline().strip()
-                    if code:
-                        pos = getPos(code)
+                    
+                    if not code:
+                        continue
                         
-                        if not pos.isdigit() or int(pos) < 1 or int(pos) > 12:
-                            print(f"Código inválido: {pos}")
-                            continue
-                            
-                        pos = int(pos)
+                    pos = getPos(code)
+                    
+                    if not pos.isdigit() or int(pos) < 1 or int(pos) > 12:
+                        print(f"Código inválido: {pos}")
+                        continue
                         
-                        if pos in scanned_positions:
-                            print(f"Posição {pos} já escaneada!")
-                            continue
-                            
-                        if isOccupied(pos):
-                            print(f"Posição {pos} ocupada!")
-                            continue
-                            
-                        scanned_positions.append(pos)
-                        indicateRightPos(pos)
-                        print(f"PS-{pos:03d} adicionado. Posições ativas: {scanned_positions}")
-                except IOError:
-                    pass  # Não há input disponível
+                    pos = int(pos)
+                    
+                    if pos in scanned_positions:
+                        print(f"Posição {pos} já escaneada!")
+                        continue
+                        
+                    if isOccupied(pos):
+                        print(f"Posição {pos} ocupada!")
+                        continue
+                        
+                    scanned_positions.append(pos)
+                    indicateRightPos(pos)
+                    print(f"PS-{pos:03d} adicionado. Posições ativas: {scanned_positions}")
                 
                 time.sleep(0.1)
             
