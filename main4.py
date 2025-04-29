@@ -1,23 +1,18 @@
-#!/usr/bin/env python3  
-# Sistema com múltiplos códigos, monitoramento contínuo de peças e verificação com API
+#!/usr/bin/env python3
 
+from leds import *
 from modules.fan import *
-from modules.leds import *
 from modules.switches import *
 from modules.connection import *
 import RPi.GPIO as GPIO                     # type: ignore
 import multiprocessing
 import time
 import sys
-import requests  # Para chamadas à API
+import requests
 
 API_BASE = 'http://192.168.30.207:5000'
 
-
-# ====== Funções auxiliares para integração com API ======
-
 def get_expected_switch_states():
-    """Consulta o estado esperado de cada posição na API."""
     try:
         response = requests.get(f'{API_BASE}/everyPlate')
         if response.status_code == 200:
@@ -30,15 +25,8 @@ def get_expected_switch_states():
         return None
 
 def get_pos_from_api(code):
-    """
-    Consulta a posição correta do código na API.
-    Assumindo que o código de barras é o número da posição.
-    Se não for, substitua esta função conforme a lógica da sua API.
-    """
     try:
-        # Se o código de barras é o número da posição:
         pos = int(code)
-        # Verifica se a posição existe na API
         response = requests.get(f'{API_BASE}/status/{pos}')
         if response.status_code == 200:
             return pos
@@ -50,7 +38,6 @@ def get_pos_from_api(code):
         return None
 
 def toggle_position(pos):
-    """Envia comando para alternar o estado da posição na API."""
     try:
         response = requests.post(f'{API_BASE}/toggle/{pos}')
         if response.status_code == 200:
@@ -60,27 +47,25 @@ def toggle_position(pos):
     except Exception as e:
         print(f"Erro ao alternar posição {pos}: {e}")
 
-# ====== Subprocesso para verificação contínua de sincronização switch-API ======
-
 def check_switch_api_sync(flag_monitoramento):
-    """Verifica continuamente se o estado físico dos switches corresponde ao estado da API."""
+    last_discrepancy = set()
     while flag_monitoramento.is_set():
         expected_states = get_expected_switch_states()
         if expected_states is None:
             time.sleep(1)
             continue
         current_states = getSwitches()
+        current_discrepancy = set()
         for i, (expected, current) in enumerate(zip(expected_states, current_states)):
             pos = i + 1
             if expected != current:
-                # Acionar LED intermitente na posição em não conformidade
-                blink_led(pos, color=YELLOW)
-            else:
-                # Apagar LED de erro se estiver aceso
-                rightPos(pos)
+                current_discrepancy.add(pos)
+        # Pisca LED apenas para novas discrepâncias
+        new_discrepancy = current_discrepancy - last_discrepancy
+        for pos in new_discrepancy:
+            blink_led(pos, color=YELLOW)
+        last_discrepancy = current_discrepancy
         time.sleep(1)
-
-# ====== Função principal ======
 
 def main():
     try:
@@ -121,16 +106,13 @@ def main():
                     if platePosition in pressed_switches:
                         rightPos(platePosition)
                         print("Posição correta verificada! (Verde)")
-                        toggle_position(platePosition)  # Alterna na API
-                        break  # Avança para o próximo código
+                        toggle_position(platePosition)
+                        break
                     else:
-                        # Posição errada pressionada
                         for pos in pressed_switches:
                             blink_led(pos, color=RED)
                         blink_led(platePosition, color=YELLOW)
                         print(f"ERRO: Switch errado pressionado: {pressed_switches}. Remova a placa errada.")
-
-                        # Aguarda a remoção do switch errado
                         while True:
                             current_states = getSwitches()
                             still_wrong = [pos for pos in pressed_switches if current_states[pos-1] == 0]
