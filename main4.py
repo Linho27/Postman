@@ -26,12 +26,19 @@ def get_expected_switch_states():
 
 def get_pos_from_api(code):
     try:
-        pos = int(code)
-        response = requests.get(f'{API_BASE}/status/{pos}', timeout=2)
+        # Vai buscar todas as placas
+        response = requests.get(f'{API_BASE}/everyPlate', timeout=2)
         if response.status_code == 200:
-            return pos
+            placas = response.json()
+            # Procura o dicionário onde o campo 'codigo' corresponde ao código lido
+            for placa in placas:
+                # Ajusta o nome do campo conforme o teu JSON (ex: 'codigo', 'code', etc)
+                if placa.get('codigo') == code or placa.get('code') == code:
+                    return placa['id']  # ou o campo correto para o ID numérico
+            print("Código não encontrado na API.")
+            return None
         else:
-            print("Posição não encontrada na API.")
+            print("Erro ao consultar todas as placas na API.")
             return None
     except Exception as e:
         print(f"Erro ao consultar API: {e}")
