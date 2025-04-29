@@ -4,7 +4,7 @@ from modules.leds import *
 from modules.fan import *
 from modules.switches import *
 from modules.connection import *
-import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO                     # type: ignore
 import multiprocessing
 import time
 import sys
@@ -14,9 +14,9 @@ API_BASE = 'http://192.168.30.207:5000'
 
 def get_expected_switch_states():
     try:
-        response = requests.get(f'{API_BASE}/everyPlate', timeout=2)
+        response = requests.get(f'{API_BASE}/everyPlate')
         if response.status_code == 200:
-            return response.json()
+            return response.json()  # Exemplo: [1, 1, 0, 1, ...]
         else:
             print("Erro ao consultar estados dos switches na API.")
             return None
@@ -27,7 +27,7 @@ def get_expected_switch_states():
 def get_pos_from_api(code):
     try:
         pos = int(code)
-        response = requests.get(f'{API_BASE}/status/{pos}', timeout=2)
+        response = requests.get(f'{API_BASE}/status/{pos}')
         if response.status_code == 200:
             return pos
         else:
@@ -39,7 +39,7 @@ def get_pos_from_api(code):
 
 def toggle_position(pos):
     try:
-        response = requests.post(f'{API_BASE}/toggle/{pos}', timeout=2)
+        response = requests.post(f'{API_BASE}/toggle/{pos}')
         if response.status_code == 200:
             print(f"Toggle enviado para posição {pos}.")
         else:
@@ -48,29 +48,19 @@ def toggle_position(pos):
         print(f"Erro ao alternar posição {pos}: {e}")
 
 def check_switch_api_sync(flag_monitoramento):
-    # Ignora discrepâncias iniciais
-    expected_states = get_expected_switch_states()
-    current_states = getSwitches()
-    if expected_states is None or current_states is None:
-        last_discrepancy = set()
-    else:
-        last_discrepancy = set(
-            i + 1 for i, (expected, current) in enumerate(zip(expected_states, current_states)) if expected != current
-        )
-    time.sleep(1)
-
+    last_discrepancy = set()
     while flag_monitoramento.is_set():
         expected_states = get_expected_switch_states()
         if expected_states is None:
             time.sleep(1)
             continue
         current_states = getSwitches()
-        if current_states is None:
-            time.sleep(1)
-            continue
-        current_discrepancy = set(
-            i + 1 for i, (expected, current) in enumerate(zip(expected_states, current_states)) if expected != current
-        )
+        current_discrepancy = set()
+        for i, (expected, current) in enumerate(zip(expected_states, current_states)):
+            pos = i + 1
+            if expected != current:
+                current_discrepancy.add(pos)
+        # Pisca LED apenas para novas discrepâncias
         new_discrepancy = current_discrepancy - last_discrepancy
         for pos in new_discrepancy:
             blink_led(pos, color=YELLOW)
@@ -97,10 +87,9 @@ def main():
         print("\nModo de operação: Escaneie o código de barras da placa.")
 
         while True:
-            code = input("\nEscanear código de barras (ou ENTER para sair): ").strip()
+            code = input("Escanear código de barras: ").strip()
             if not code:
-                print("Saindo do sistema.")
-                break
+                continue
 
             platePosition = get_pos_from_api(code)
             if platePosition is None or platePosition < 1 or platePosition > 12:
@@ -110,34 +99,22 @@ def main():
             indicateRightPos(platePosition)
             print(f"Coloque a placa na posição {platePosition} e pressione o switch correspondente.")
 
-            aguardando = True
-            while aguardando:
+            while True:
                 current_states = getSwitches()
-                if current_states is None:
-                    print("Erro ao ler switches. Tentando novamente...")
-                    time.sleep(0.5)
-                    continue
-
                 pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 if pressed_switches:
                     if platePosition in pressed_switches:
-                        deactivate_segment(platePosition)  # Apaga o azul antes de acender o verde
                         rightPos(platePosition)
                         print("Posição correta verificada! (Verde)")
                         toggle_position(platePosition)
-                        aguardando = False
+                        break
                     else:
                         for pos in pressed_switches:
                             blink_led(pos, color=RED)
                         blink_led(platePosition, color=YELLOW)
                         print(f"ERRO: Switch errado pressionado: {pressed_switches}. Remova a placa errada.")
-                        # Aguarda até todos os switches errados serem soltos
                         while True:
                             current_states = getSwitches()
-                            if current_states is None:
-                                print("Erro ao ler switches. Tentando novamente...")
-                                time.sleep(0.5)
-                                continue
                             still_wrong = [pos for pos in pressed_switches if current_states[pos-1] == 0]
                             if not still_wrong:
                                 break
