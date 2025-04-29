@@ -11,7 +11,8 @@ import time
 import sys
 import requests  # Para chamadas à API
 
-API_BASE = 'http://127.0.0.1'
+API_BASE = 'http://192.168.30.207:5000'
+
 
 # ====== Funções auxiliares para integração com API ======
 
