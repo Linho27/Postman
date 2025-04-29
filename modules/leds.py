@@ -74,6 +74,9 @@ def warnWrongPos(right_pos, wrong_pos):
         deactivate_segment(right_pos)
         deactivate_segment(wrong_pos)
         time.sleep(0.25)
+    # Garante que ambos ficam desligados no final
+    deactivate_segment(right_pos)
+    deactivate_segment(wrong_pos)
 
 def rightPos(pos):
     activate_segment(pos, GREEN)

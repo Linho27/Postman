@@ -4,7 +4,7 @@ from modules.leds import *
 from modules.fan import *
 from modules.switches import *
 from modules.connection import *
-import RPi.GPIO as GPIO                     # type: ignore
+import RPi.GPIO as GPIO
 import multiprocessing
 import time
 import sys
@@ -14,9 +14,9 @@ API_BASE = 'http://192.168.30.207:5000'
 
 def get_expected_switch_states():
     try:
-        response = requests.get(f'{API_BASE}/everyPlate')
+        response = requests.get(f'{API_BASE}/everyPlate', timeout=2)
         if response.status_code == 200:
-            return response.json()  # Exemplo: [1, 1, 0, 1, ...]
+            return response.json()
         else:
             print("Erro ao consultar estados dos switches na API.")
             return None
@@ -27,7 +27,7 @@ def get_expected_switch_states():
 def get_pos_from_api(code):
     try:
         pos = int(code)
-        response = requests.get(f'{API_BASE}/status/{pos}')
+        response = requests.get(f'{API_BASE}/status/{pos}', timeout=2)
         if response.status_code == 200:
             return pos
         else:
@@ -39,7 +39,7 @@ def get_pos_from_api(code):
 
 def toggle_position(pos):
     try:
-        response = requests.post(f'{API_BASE}/toggle/{pos}')
+        response = requests.post(f'{API_BASE}/toggle/{pos}', timeout=2)
         if response.status_code == 200:
             print(f"Toggle enviado para posição {pos}.")
         else:
@@ -48,19 +48,28 @@ def toggle_position(pos):
         print(f"Erro ao alternar posição {pos}: {e}")
 
 def check_switch_api_sync(flag_monitoramento):
-    last_discrepancy = set()
+    expected_states = get_expected_switch_states()
+    current_states = getSwitches()
+    if expected_states is None or current_states is None:
+        last_discrepancy = set()
+    else:
+        last_discrepancy = set(
+            i + 1 for i, (expected, current) in enumerate(zip(expected_states, current_states)) if expected != current
+        )
+    time.sleep(1)
+
     while flag_monitoramento.is_set():
         expected_states = get_expected_switch_states()
         if expected_states is None:
             time.sleep(1)
             continue
         current_states = getSwitches()
-        current_discrepancy = set()
-        for i, (expected, current) in enumerate(zip(expected_states, current_states)):
-            pos = i + 1
-            if expected != current:
-                current_discrepancy.add(pos)
-        # Pisca LED apenas para novas discrepâncias
+        if current_states is None:
+            time.sleep(1)
+            continue
+        current_discrepancy = set(
+            i + 1 for i, (expected, current) in enumerate(zip(expected_states, current_states)) if expected != current
+        )
         new_discrepancy = current_discrepancy - last_discrepancy
         for pos in new_discrepancy:
             blink_led(pos, color=YELLOW)
@@ -70,6 +79,7 @@ def check_switch_api_sync(flag_monitoramento):
 def main():
     try:
         print("Sistema de gerenciamento de placas iniciando...")
+        ledsOff()
         tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
         tempChecking.start()
         startUp()
@@ -104,9 +114,11 @@ def main():
                 pressed_switches = [i+1 for i, state in enumerate(current_states) if state == 0]
                 if pressed_switches:
                     if platePosition in pressed_switches:
+                        deactivate_segment(platePosition)  # Apaga o azul antes de acender o verde
                         rightPos(platePosition)
                         print("Posição correta verificada! (Verde)")
                         toggle_position(platePosition)
+                        ledsOff()  # Garante tudo apagado antes de avançar
                         break
                     else:
                         for pos in pressed_switches:
