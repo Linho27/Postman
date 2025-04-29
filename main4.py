@@ -48,19 +48,30 @@ def toggle_position(pos):
         print(f"Erro ao alternar posição {pos}: {e}")
 
 def check_switch_api_sync(flag_monitoramento):
-    last_discrepancy = set()
+    # Ignora discrepâncias iniciais
+    expected_states = get_expected_switch_states()
+    current_states = getSwitches()
+    if expected_states is None or current_states is None:
+        last_discrepancy = set()
+    else:
+        last_discrepancy = set(
+            i + 1 for i, (expected, current) in enumerate(zip(expected_states, current_states)) if expected != current
+        )
+    time.sleep(1)
+
     while flag_monitoramento.is_set():
         expected_states = get_expected_switch_states()
         if expected_states is None:
             time.sleep(1)
             continue
         current_states = getSwitches()
-        current_discrepancy = set()
-        for i, (expected, current) in enumerate(zip(expected_states, current_states)):
-            pos = i + 1
-            if expected != current:
-                current_discrepancy.add(pos)
-        # Pisca LED apenas para novas discrepâncias
+        if current_states is None:
+            time.sleep(1)
+            continue
+        current_discrepancy = set(
+            i + 1 for i, (expected, current) in enumerate(zip(expected_states, current_states)) if expected != current
+        )
+        # Só pisca para discrepâncias novas (só quando mudam)
         new_discrepancy = current_discrepancy - last_discrepancy
         for pos in new_discrepancy:
             blink_led(pos, color=YELLOW)
