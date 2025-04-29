@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from leds import *
+from modules.leds import *
 from modules.fan import *
 from modules.switches import *
 from modules.connection import *
