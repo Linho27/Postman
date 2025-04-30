@@ -26,15 +26,14 @@ def get_expected_switch_states():
 
 def get_pos_from_api(code):
     try:
-        # Vai buscar todas as placas
+        # Busca todas as placas
         response = requests.get(f'{API_BASE}/everyPlate', timeout=2)
         if response.status_code == 200:
             placas = response.json()
-            # Procura o dicionário onde o campo 'codigo' corresponde ao código lido
+            # Procura o dicionário onde o campo 'codigo' ou 'code' corresponde ao código lido
             for placa in placas:
-                # Ajusta o nome do campo conforme o teu JSON (ex: 'codigo', 'code', etc)
                 if placa.get('codigo') == code or placa.get('code') == code:
-                    return placa['id']  # ou o campo correto para o ID numérico
+                    return placa['id']  # Ajuste se o campo do ID for diferente
             print("Código não encontrado na API.")
             return None
         else:
@@ -132,6 +131,7 @@ def main():
                             blink_led(pos, color=RED)
                         blink_led(platePosition, color=YELLOW)
                         print(f"ERRO: Switch errado pressionado: {pressed_switches}. Remova a placa errada.")
+                        # Espera até todos os switches errados serem liberados
                         while True:
                             current_states = getSwitches()
                             still_wrong = [pos for pos in pressed_switches if current_states[pos-1] == 0]
