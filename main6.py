@@ -30,11 +30,12 @@ def get_pos_from_api(code):
         if response.status_code == 200:
             placas = response.json()
             print("DEBUG placas:", placas, type(placas))
-            # placas é uma lista de strings
-            if isinstance(placas, list):
-                for idx, placa in enumerate(placas):
-                    if isinstance(placa, str) and placa == code:
-                        return idx + 1  # devolve a posição (1-based)
+            if isinstance(placas, dict):
+                for pos_str, info in placas.items():
+                    # info deve ser um dicionário com o campo 'id'
+                    if isinstance(info, dict) and info.get('id') == code:
+                        # pos_str é a posição como string, converte para inteiro
+                        return int(pos_str)
             print("Código não encontrado na API.")
             return None
         else:
