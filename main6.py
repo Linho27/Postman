@@ -30,15 +30,11 @@ def get_pos_from_api(code):
         if response.status_code == 200:
             placas = response.json()
             print("DEBUG placas:", placas, type(placas))
-            # Se placas for uma lista de strings
+            # placas é uma lista de strings
             if isinstance(placas, list):
                 for idx, placa in enumerate(placas):
                     if isinstance(placa, str) and placa == code:
-                        return idx + 1  # Posição na lista (1-based)
-            # Se placas for uma string única
-            elif isinstance(placas, str):
-                if placas == code:
-                    return 1
+                        return idx + 1  # devolve a posição (1-based)
             print("Código não encontrado na API.")
             return None
         else:
