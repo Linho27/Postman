@@ -9,29 +9,6 @@ import multiprocessing
 import time
 import sys
 import requests
-import json
-
-def get_pos_from_api(code):
-    try:
-        response = requests.get(f'{API_BASE}/everyPlate', timeout=2)
-        if response.status_code == 200:
-            placas = response.json()
-            print("DEBUG placas:", placas)
-            # Se placas for uma string, tente converter
-            if isinstance(placas, str):
-                placas = json.loads(placas)
-            # Agora placas deve ser uma lista de dicionários
-            for placa in placas:
-                if isinstance(placa, dict) and (placa.get('codigo') == code or placa.get('code') == code):
-                    return placa['id']
-            print("Código não encontrado na API.")
-            return None
-        else:
-            print("Erro ao consultar todas as placas na API.")
-            return None
-    except Exception as e:
-        print(f"Erro ao consultar API: {e}")
-        return None
 
 API_BASE = 'http://192.168.30.207:5000'
 
@@ -49,14 +26,19 @@ def get_expected_switch_states():
 
 def get_pos_from_api(code):
     try:
-        # Busca todas as placas
         response = requests.get(f'{API_BASE}/everyPlate', timeout=2)
         if response.status_code == 200:
             placas = response.json()
-            # Procura o dicionário onde o campo 'codigo' ou 'code' corresponde ao código lido
-            for placa in placas:
-                if placa.get('codigo') == code or placa.get('code') == code:
-                    return placa['id']  # Ajuste se o campo do ID for diferente
+            print("DEBUG placas:", placas, type(placas))
+            # Se placas for uma lista de strings
+            if isinstance(placas, list):
+                for idx, placa in enumerate(placas):
+                    if isinstance(placa, str) and placa == code:
+                        return idx + 1  # Posição na lista (1-based)
+            # Se placas for uma string única
+            elif isinstance(placas, str):
+                if placas == code:
+                    return 1
             print("Código não encontrado na API.")
             return None
         else:
