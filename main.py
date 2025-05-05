@@ -1,44 +1,68 @@
+# ================================
+# 🔐 Environment Variables
+# ================================
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_BASE = os.getenv("BASE_API")
+
+# ================================
+# 📦 Imports
+# ================================
+
 from modules.leds import *
 from modules.switches import *
 from modules.connection import *
-import RPi.GPIO as GPIO                     # type: ignore
+import RPi.GPIO as GPIO                 # type: ignore
 import multiprocessing
-import time
+from time import sleep
+import sys
+import requests
+
+# ================================
+# ⚙️ Background Functions
+# ================================
+
+def outOfSyncSwitches():
+    while True:
+        print("Debug#2")
+        sleep(1)
+
+
+# ================================
+# ⭐ Main code
+# ================================
 
 if __name__ == "__main__":
-        try:
-            startUpLEDS()
-            while True:
-                
-                code = input()                      # Wait for bar/qr code input
-                platePosition = getPos(code)        # Look for ID with code with MTS
-                if code == '404':
-                    break
-                else:
-                    if isOccupied(platePosition):       # If position is occupied
-                        warnOccupiedPos(platePosition)
-                    else:
-                        switchesStates = getSwitches()                      #Save switches states
-                        indicateRightPos(platePosition)                     #Indicate where to place the plate
-                        while didntChange(compareSwitches(switchesStates)): #Wait until something changes
-                            time.sleep(0.5)
-                        ledsOff()                                           #Turn off indicating light
-                    
-                        switchesStatesNew = compareSwitches(switchesStates) #Compare old switches states to now
-                        positionIsRight = False
-                        while not positionIsRight:                          #Repeat while position is wrong
-                            time.sleep(1)
-                            switchesStatesNew = compareSwitches(switchesStates) #Compare old switches states to now
-                            print(switchesStatesNew)
-                            if int(switchesStatesNew[0]) == int(platePosition) - 1:           #If position is right
-                                rightPos(platePosition)                         #Turn on green leds for 10s
-                                positionIsRight = True
-                            else:                                               #If position is wrong
-                                warnWrongPos(platePosition, switchesStatesNew[0])   #Blinking leds (right and wrong pos)
+    outOfSyncChecking = multiprocessing.Process(target=outOfSyncSwitches, daemon=True)
+    outOfSyncChecking.start()
+    while True:
+        print("Debug#1")
+        sleep(1)
 
-        except KeyboardInterrupt:                           #Handle ctrl+c
-            print("Programa interrompido pelo usuário.")
-        finally:
-            GPIO.cleanup()
-            ledsOff()
-            print("Programa interrompido sem problemas.")
+
+
+
+
+        """
+        --Sempre a correr de fundo
+
+            Verificação se estado do switch está igual à api
+            Caso não seja
+                Ligar led intermitente em não correspondencia
+
+        --Main
+
+            Ler código de barras
+            Contactar com a api para receber a posição do código
+            Ligar leds na posição correta
+            Aguardar mudança de estado de algum switch
+            Caso switch seja o correto
+                Ligar luz de verificação de posição correta
+            Caso switch seja o errado
+                Ligar luz intermitente na posição correta e errada
+                Aguardar a placa da posição errada ser removida
+                Voltar para o passo anterior
+        """
