@@ -1,18 +1,31 @@
-# API connection module
+# ================================
+# 🔗 API connection module
+# ================================
 
-# Libraries import
+# ================================
+# 🔐 Environment Variables
+# ================================
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_BASE = os.getenv("BASE_API")
+
+# ================================
+# 📦 Imports
+# ================================
 import requests
 
-# Define API link
-linkAPI = "http://127.0.0.1:5000"
-# End points:
-#   /everyPlate
-#   /status/{pos}
-#   /toggle/{pos}
+# ================================
+# ⚙️ Functions
+# ================================
 
-# Function to get the position of a specific plate
+# ================================
+# ⚙️ Return specific plate's position
+# ================================
 def getPos(id):
-    url = linkAPI + f'/everyPlate'
+    url = API_BASE + f'/everyPlate'
     try:
         response = requests.get(url)
         if response.status_code == 200:
@@ -26,11 +39,13 @@ def getPos(id):
     except requests.exceptions.RequestException as e:
         return f"Erro na requisição: {e}"
 
-# Function to toggle position status
+# ================================
+# ⚙️ Toggle position status
+# ================================
 def togglePos(pos):
     if not (1 <= pos <= 12):
         return "Número inválido. Deve estar entre 1 e 12."
-    url = linkAPI + f"/toggle/{pos}"
+    url = API_BASE + f"/toggle/{pos}"
     try:
         response = requests.post(url)
         if response.status_code == 200:
@@ -39,9 +54,11 @@ def togglePos(pos):
     except requests.exceptions.RequestException as e:
         return f"Erro na requisição: {e}"
 
-# Function to check if a specific position is occupied    
+# ================================
+# ⚙️ Get position status
+# ================================  
 def isOccupied(pos):
-    url = linkAPI + f"/status/{pos}"    
+    url = API_BASE + f"/status/{pos}"    
     try:
         response = requests.get(url)
         if response.status_code == 200:
