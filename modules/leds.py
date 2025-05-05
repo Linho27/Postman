@@ -53,7 +53,7 @@ strip.begin()
 # ================================
 # ⚙️ Startup function
 # ================================
-def startUp():
+def startUpLEDS():
     print("Testando LEDs...")
     for pos in SEGMENT_MAP:
         activate_segment(pos, PURPLE)
@@ -61,7 +61,7 @@ def startUp():
         deactivate_segment(pos)
     ledsOff()
 
-# # ================================
+# ================================
 # ⚙️ Crude functions
 # ================================
 
@@ -91,7 +91,7 @@ def ledsOff():
         strip.setPixelColor(i, OFF)
     strip.show()
 
-# # ================================
+# ================================
 # ▶️ Functions
 # ================================
 

@@ -14,7 +14,7 @@ def main():
         print("Sistema de gerenciamento de placas iniciando...")
         
         # Teste inicial dos LEDs
-        startUp()
+        startUpLEDS()
         
         while True:
             # ETAPA 1: Leitura do código

@@ -86,7 +86,7 @@ def main():
         ledsOff()
         tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
         tempChecking.start()
-        startUp()
+        startUpLEDS()
 
         # Iniciar subprocesso de verificação contínua switch-API
         flag_sync = multiprocessing.Event()

@@ -7,7 +7,7 @@ import time
 
 if __name__ == "__main__":
         try:
-            startUp()
+            startUpLEDS()
             while True:
                 
                 code = input()                      # Wait for bar/qr code input

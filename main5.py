@@ -26,7 +26,9 @@ import requests
 # ================================
 
 def outOfSyncSwitches():
-    sleep(1)
+    while True:
+        print("Debug#2")
+        sleep(1)
 
 
 # ================================
@@ -37,8 +39,8 @@ if __name__ == "__main__":
     outOfSyncChecking = multiprocessing.Process(target=outOfSyncSwitches, daemon=True)
     outOfSyncChecking.start()
     while True:
-        #Codigo main aqui
-
+        print("Debug#1")
+        sleep(1)
 
 
 
