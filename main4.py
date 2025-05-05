@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from modules.leds import *
 from modules.fan import *
 from modules.switches import *
