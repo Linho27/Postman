@@ -1,7 +1,5 @@
-#!/usr/bin/env python3 
 # Sistema com feedback vermelho piscante até novo pressionamento
 
-from modules.fan import *
 from modules.leds import *
 from modules.switches import *
 from modules.connection import *
@@ -14,10 +12,6 @@ def main():
     try:
         # Inicialização do sistema
         print("Sistema de gerenciamento de placas iniciando...")
-        
-        # Controle de temperatura
-        tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
-        tempChecking.start()
         
         # Teste inicial dos LEDs
         startUp()

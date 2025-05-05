@@ -1,6 +1,5 @@
 import time
 from modules.switches import getSwitches, compareSwitches, didntChange
-from modules.fan import check_temp
 from modules.leds import indicateRightPos, warnOccupiedPos, warnWrongPos, rightPos, ledsOff
 from modules.connection import getPos, isOccupied, togglePos
 

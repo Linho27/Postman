@@ -22,7 +22,7 @@ import requests
 # ================================
 
 # ================================
-# ⚙️ Return specific plate's position
+# 🔍 Return specific plate's position
 # ================================
 def getPos(id):
     url = API_BASE + f'/everyPlate'
@@ -40,7 +40,7 @@ def getPos(id):
         return f"Erro na requisição: {e}"
 
 # ================================
-# ⚙️ Toggle position status
+# 🔄 Toggle position status
 # ================================
 def togglePos(pos):
     if not (1 <= pos <= 12):
@@ -55,7 +55,7 @@ def togglePos(pos):
         return f"Erro na requisição: {e}"
 
 # ================================
-# ⚙️ Get position status
+# ✅ Get position status
 # ================================  
 def isOccupied(pos):
     url = API_BASE + f"/status/{pos}"    

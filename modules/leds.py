@@ -1,8 +1,16 @@
-# leds.py
+# ================================
+# 💡 LEDs control module
+# ================================
+
+# ================================
+# 📦 Imports
+# ================================
 import time
 from rpi_ws281x import PixelStrip, Color  # type: ignore
 
-# Configuração da fita de LEDs
+# ================================
+# 🎞️ LED strip configuration
+# ================================
 LED_COUNT = 34
 LED_PIN = 18
 LED_FREQ_HZ = 800000
@@ -25,6 +33,9 @@ SEGMENT_MAP = {
     12: [31, 32, 33]
 }
 
+# ================================
+# 🍭 Color variables
+# ================================
 OFF    = Color(0, 0, 0)
 PURPLE = Color(160, 32, 240)
 RED    = Color(255, 0, 0)
@@ -33,8 +44,37 @@ BLUE   = Color(0, 0, 255)
 WHITE  = Color(255, 255, 255)
 YELLOW = Color(255, 255, 0)
 
+# ================================
+# 🎞️ LED strip initialization
+# ================================
 strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
 strip.begin()
+
+# ================================
+# ⚙️ Functions
+# ================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 def activate_segment(position: int, color: Color):
     if position not in SEGMENT_MAP:

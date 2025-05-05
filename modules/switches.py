@@ -1,11 +1,39 @@
-# switches.py - Versão compatível com o main existente
-import RPi.GPIO as GPIO
+# ================================
+# 🔗 Switches control module
+# ================================
+
+# ================================
+# 🔐 Environment Variables
+# ================================
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+switchesPins = os.getenv("SWITCHES_PINS")
+
+# ================================
+# 📦 Imports
+# ================================
+import RPi.GPIO as GPIO                 # type: ignore
 import time
 from typing import List, Dict
-from modules.connection import togglePos, isOccupied
+from modules.connection import *
 
-# Configuração dos pinos (BCM numbering)
-switches_pins = [4, 5, 6, 12, 13, 16, 20, 21, 22, 23, 24, 25]  # Pinos 1-12
+# ================================
+# ⚙️ Functions
+# ================================
+
+
+
+
+
+
+
+
+
+
+
 
 # Variável global para controle de inicialização
 _initialized = False
@@ -14,7 +42,7 @@ def _init_gpio():
     global _initialized
     if not _initialized:
         GPIO.setmode(GPIO.BCM)
-        for pin in switches_pins:
+        for pin in switchesPins:
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         _initialized = True
 
@@ -25,7 +53,7 @@ def syncSwitchesWithAPI():
     current_states = getSwitches()
     
     for position in range(1, 13):
-        pin = switches_pins[position-1]
+        pin = switchesPins[position-1]
         physical_state = current_states[position-1] == 0  # 0 = pressionado
         api_state = isOccupied(position)
         
@@ -39,7 +67,7 @@ def syncSwitchesWithAPI():
 def getSwitches():
     """Retorna estados brutos de todos os switches"""
     _init_gpio()
-    return [GPIO.input(pin) for pin in switches_pins]
+    return [GPIO.input(pin) for pin in switchesPins]
 
 def compareSwitches(oldStates):
     """Compara com estados anteriores"""

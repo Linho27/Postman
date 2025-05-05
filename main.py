@@ -1,4 +1,3 @@
-from modules.fan import *
 from modules.leds import *
 from modules.switches import *
 from modules.connection import *
@@ -8,9 +7,6 @@ import time
 
 if __name__ == "__main__":
         try:
-            #Start fan controll in a thread
-            tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
-            tempChecking.start()
             startUp()
             while True:
                 

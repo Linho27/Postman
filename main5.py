@@ -13,12 +13,11 @@ API_BASE = os.getenv("BASE_API")
 # ================================
 
 from modules.leds import *
-from modules.fan import *
 from modules.switches import *
 from modules.connection import *
 import RPi.GPIO as GPIO                 # type: ignore
 import multiprocessing
-import time
+from time import sleep
 import sys
 import requests
 
