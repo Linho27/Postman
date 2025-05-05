@@ -51,30 +51,26 @@ strip = PixelStrip(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRI
 strip.begin()
 
 # ================================
-# ⚙️ Functions
+# ⚙️ Startup function
+# ================================
+def startUp():
+    print("Testando LEDs...")
+    for pos in SEGMENT_MAP:
+        activate_segment(pos, PURPLE)
+        time.sleep(0.2)
+        deactivate_segment(pos)
+    ledsOff()
+
+# # ================================
+# ⚙️ Crude functions
 # ================================
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def blink_segment(position: int, color: Color, duration: float = 1.5, blinks: int = 3):
+    for _ in range(blinks):
+        activate_segment(position, color)
+        time.sleep(duration/(2*blinks))
+        deactivate_segment(position)
+        time.sleep(duration/(2*blinks))
 
 def activate_segment(position: int, color: Color):
     if position not in SEGMENT_MAP:
@@ -90,15 +86,14 @@ def deactivate_segment(position: int):
         strip.setPixelColor(led_index, OFF)
     strip.show()
 
-def blink_segment(position: int, color: Color, duration: float = 1.5, blinks: int = 3):
-    for _ in range(blinks):
-        activate_segment(position, color)
-        time.sleep(duration/(2*blinks))
-        deactivate_segment(position)
-        time.sleep(duration/(2*blinks))
+def ledsOff():
+    for i in range(strip.numPixels()):
+        strip.setPixelColor(i, OFF)
+    strip.show()
 
-def blink_led(position: int, color: Color = YELLOW, duration: float = 1.5, blinks: int = 3):
-    blink_segment(position, color, duration, blinks)
+# # ================================
+# ▶️ Functions
+# ================================
 
 def indicateRightPos(pos):
     activate_segment(pos, BLUE)
@@ -114,7 +109,7 @@ def warnWrongPos(right_pos, wrong_pos):
         deactivate_segment(right_pos)
         deactivate_segment(wrong_pos)
         time.sleep(0.25)
-    # Garante que ambos ficam desligados no final
+
     deactivate_segment(right_pos)
     deactivate_segment(wrong_pos)
 
@@ -122,16 +117,3 @@ def rightPos(pos):
     activate_segment(pos, GREEN)
     time.sleep(1.5)
     deactivate_segment(pos)
-
-def ledsOff():
-    for i in range(strip.numPixels()):
-        strip.setPixelColor(i, OFF)
-    strip.show()
-
-def startUp():
-    print("Testando LEDs...")
-    for pos in SEGMENT_MAP:
-        activate_segment(pos, PURPLE)
-        time.sleep(0.2)
-        deactivate_segment(pos)
-    ledsOff()
