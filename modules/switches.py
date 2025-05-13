@@ -25,7 +25,7 @@ if SWITCHES_PINS_RAW is None:
 print("DEBUG SWITCHES_PINS_RAW:", repr(SWITCHES_PINS_RAW))
 
 # Remove colchetes, aspas e espaços
-SWITCHES_PINS_RAW = SWITCHES_PINS_RAW.strip().strip("[](){}'\"")
+SWITCHES_PINS_RAW = SWITCHES_PINS_RAW.strip().strip("[]").replace("'", "").replace('"', "")
 
 # Faz split e converte para inteiros, ignorando elementos vazios ou inválidos
 SWITCHES_PINS = []
