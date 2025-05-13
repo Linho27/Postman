@@ -1,11 +1,5 @@
-import board
-import neopixel
+from modules.leds import strip, Color
 
-# Número de LEDs na fita
-LED_COUNT = 60  # Substitua pelo número real de LEDs
-
-# Inicializa o objeto NeoPixel
-pixels = neopixel.NeoPixel(board.D17, LED_COUNT, auto_write=True)
-
-# Define todos os LEDs para branco (255, 255, 255)
-pixels.fill((255, 255, 255))
+for i in range(strip.numPixels()):
+    strip.setPixelColor(i, Color(255, 255, 255))  # Branco
+strip.show()
