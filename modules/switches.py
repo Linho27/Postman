@@ -22,19 +22,19 @@ if SWITCHES_PINS_RAW is None:
     raise ValueError("Variável de ambiente 'SWITCHES_PINS' não definida.")
 
 # DEBUG: Mostra o valor lido da variável de ambiente
-print("DEBUG SWITCHES_PINS_RAW:", SWITCHES_PINS_RAW)
+print("DEBUG SWITCHES_PINS_RAW:", repr(SWITCHES_PINS_RAW))
 
-# Remove colchetes, espaços, aspas e outros caracteres indesejados
+# Remove colchetes, aspas e espaços
 SWITCHES_PINS_RAW = SWITCHES_PINS_RAW.strip().strip("[](){}'\"")
 
 # Faz split e converte para inteiros, ignorando elementos vazios ou inválidos
 SWITCHES_PINS = []
 for pin in SWITCHES_PINS_RAW.split(","):
     pin = pin.strip()
-    if pin:  # Só processa se não for string vazia
-        try:
-            SWITCHES_PINS.append(int(pin))
-        except ValueError:
+    if pin.lstrip('-').isdigit():
+        SWITCHES_PINS.append(int(pin))
+    else:
+        if pin:  # Só mostra aviso se não for string vazia
             print(f"AVISO: Ignorado valor inválido em SWITCHES_PINS: '{pin}'")
 
 if not SWITCHES_PINS:
