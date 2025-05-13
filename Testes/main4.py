@@ -1,7 +1,4 @@
-from modules.leds import (
-    ledsOff, startUpLEDS, indicateRightPos, rightPos,
-    deactivate_segment, blink_segment, RED, YELLOW
-)
+from modules.leds import *
 from modules.switches import getSwitches
 from modules.connection import *
 import RPi.GPIO as GPIO
