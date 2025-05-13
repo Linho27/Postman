@@ -1,6 +1,8 @@
-from modules.leds import *
-from modules.fan import *
-from modules.switches import *
+from modules.leds import (
+    ledsOff, startUpLEDS, indicateRightPos, rightPos,
+    deactivate_segment, blink_segment, RED, YELLOW
+)
+from modules.switches import getSwitches
 from modules.connection import *
 import RPi.GPIO as GPIO
 import multiprocessing
@@ -24,11 +26,9 @@ def get_expected_switch_states():
 
 def get_pos_from_api(code):
     try:
-        # Busca todas as placas
         response = requests.get(f'{API_BASE}/everyPlate', timeout=2)
         if response.status_code == 200:
             placas = response.json()
-            # Procura o dicionário onde o campo 'codigo' ou 'code' corresponde ao código lido
             for placa in placas:
                 if placa.get('codigo') == code or placa.get('code') == code:
                     return placa['id']  # Ajuste se o campo do ID for diferente
@@ -76,7 +76,7 @@ def check_switch_api_sync(flag_monitoramento):
         )
         new_discrepancy = current_discrepancy - last_discrepancy
         for pos in new_discrepancy:
-            blink_led(pos, color=YELLOW)
+            blink_segment(pos, YELLOW)
         last_discrepancy = current_discrepancy
         time.sleep(1)
 
@@ -84,8 +84,6 @@ def main():
     try:
         print("Sistema de gerenciamento de placas iniciando...")
         ledsOff()
-        tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
-        tempChecking.start()
         startUpLEDS()
 
         # Iniciar subprocesso de verificação contínua switch-API
@@ -126,8 +124,8 @@ def main():
                         break
                     else:
                         for pos in pressed_switches:
-                            blink_led(pos, color=RED)
-                        blink_led(platePosition, color=YELLOW)
+                            blink_segment(pos, RED)
+                        blink_segment(platePosition, YELLOW)
                         print(f"ERRO: Switch errado pressionado: {pressed_switches}. Remova a placa errada.")
                         # Espera até todos os switches errados serem liberados
                         while True:
