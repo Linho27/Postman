@@ -20,7 +20,8 @@ SWITCHES_PINS = os.getenv("SWITCHES_PINS")
 
 if SWITCHES_PINS is None:
     raise ValueError("Variável de ambiente 'SWITCHES_PINS' não definida.")
-# Espera-se uma string como "4,17,27,22,..."
+# Remove colchetes se existirem e converte para lista de inteiros
+SWITCHES_PINS = SWITCHES_PINS.strip("[]")
 SWITCHES_PINS = [int(pin.strip()) for pin in SWITCHES_PINS.split(",")]
 
 # ================================
