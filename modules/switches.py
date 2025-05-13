@@ -21,6 +21,9 @@ SWITCHES_PINS_RAW = os.getenv("SWITCHES_PINS")
 if SWITCHES_PINS_RAW is None:
     raise ValueError("Variável de ambiente 'SWITCHES_PINS' não definida.")
 
+# DEBUG: Mostra o valor lido da variável de ambiente
+print("DEBUG SWITCHES_PINS_RAW:", SWITCHES_PINS_RAW)
+
 # Remove colchetes, espaços, aspas e outros caracteres indesejados
 SWITCHES_PINS_RAW = SWITCHES_PINS_RAW.strip().strip("[](){}'\"")
 
@@ -28,17 +31,16 @@ SWITCHES_PINS_RAW = SWITCHES_PINS_RAW.strip().strip("[](){}'\"")
 SWITCHES_PINS = []
 for pin in SWITCHES_PINS_RAW.split(","):
     pin = pin.strip()
-    if pin.isdigit():
-        SWITCHES_PINS.append(int(pin))
-    else:
-        # Tenta converter mesmo que não seja só dígitos (ex: "-4", " 17")
+    if pin:  # Só processa se não for string vazia
         try:
             SWITCHES_PINS.append(int(pin))
         except ValueError:
-            pass  # Ignora qualquer valor inválido
+            print(f"AVISO: Ignorado valor inválido em SWITCHES_PINS: '{pin}'")
 
 if not SWITCHES_PINS:
     raise ValueError("Nenhum pino válido foi encontrado em 'SWITCHES_PINS'.")
+
+print("DEBUG SWITCHES_PINS (lista final):", SWITCHES_PINS)
 
 # ================================
 # ⚙️ GPIO Initialization
