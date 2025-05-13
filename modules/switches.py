@@ -16,13 +16,29 @@ from modules.connection import *
 # 🔐 Environment Variables
 # ================================
 load_dotenv()
-SWITCHES_PINS = os.getenv("SWITCHES_PINS")
+SWITCHES_PINS_RAW = os.getenv("SWITCHES_PINS")
 
-if SWITCHES_PINS is None:
+if SWITCHES_PINS_RAW is None:
     raise ValueError("Variável de ambiente 'SWITCHES_PINS' não definida.")
-# Remove colchetes se existirem e converte para lista de inteiros
-SWITCHES_PINS = SWITCHES_PINS.strip("[]")
-SWITCHES_PINS = [int(pin.strip()) for pin in SWITCHES_PINS.split(",")]
+
+# Remove colchetes, espaços, aspas e outros caracteres indesejados
+SWITCHES_PINS_RAW = SWITCHES_PINS_RAW.strip().strip("[](){}'\"")
+
+# Faz split e converte para inteiros, ignorando elementos vazios ou inválidos
+SWITCHES_PINS = []
+for pin in SWITCHES_PINS_RAW.split(","):
+    pin = pin.strip()
+    if pin.isdigit():
+        SWITCHES_PINS.append(int(pin))
+    else:
+        # Tenta converter mesmo que não seja só dígitos (ex: "-4", " 17")
+        try:
+            SWITCHES_PINS.append(int(pin))
+        except ValueError:
+            pass  # Ignora qualquer valor inválido
+
+if not SWITCHES_PINS:
+    raise ValueError("Nenhum pino válido foi encontrado em 'SWITCHES_PINS'.")
 
 # ================================
 # ⚙️ GPIO Initialization
