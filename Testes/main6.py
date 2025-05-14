@@ -1,5 +1,4 @@
 from modules.leds import *
-from modules.fan import *
 from modules.switches import *
 from modules.connection import *
 import RPi.GPIO as GPIO
@@ -86,8 +85,7 @@ def main():
     try:
         print("Sistema de gerenciamento de placas iniciando...")
         ledsOff()
-        tempChecking = multiprocessing.Process(target=check_temp, daemon=True)
-        tempChecking.start()
+        # Removida a verificação de temperatura que estava aqui
         startUpLEDS()
 
         # Iniciar subprocesso de verificação contínua switch-API
