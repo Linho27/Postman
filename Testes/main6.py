@@ -126,8 +126,8 @@ def main():
                         break
                     else:
                         for pos in pressed_switches:
-                            blink_led(pos, color=RED)
-                        blink_led(platePosition, color=YELLOW)
+                            blink_segment(pos, color=RED)
+                        blink_segment(platePosition, color=YELLOW)
                         print(f"ERRO: Switch errado pressionado: {pressed_switches}. Remova a placa errada.")
                         # Espera até todos os switches errados serem liberados
                         while True:
