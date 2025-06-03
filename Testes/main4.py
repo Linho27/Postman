@@ -1,11 +1,18 @@
-from modules.leds import *
-from modules.switches import getSwitches
-from modules.connection import *
-import RPi.GPIO as GPIO
-import multiprocessing
-import time
+import os
 import sys
+import time
+import signal
+import logging
 import requests
+import multiprocessing
+import RPi.GPIO as GPIO
+
+from dotenv import load_dotenv
+from typing import List, Dict, Optional
+from modules.leds import *
+from modules.switches import *
+from modules.connection import *
+
 
 API_BASE = 'http://192.168.30.207:5000'
 
