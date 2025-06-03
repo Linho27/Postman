@@ -9,7 +9,7 @@ NUM_LEDS = 34
 PIN = board.D18
 
 # Inicializa os LEDs
-pixels = neopixel.NeoPixel(PIN, NUM_LEDS, brightness=0.3, auto_write=False)
+pixels = neopixel.NeoPixel(PIN, NUM_LEDS, brightness=0.5, auto_write=False)
 
 # Função de teste: vermelho, verde, azul
 def test_leds():
