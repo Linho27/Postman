@@ -18,46 +18,35 @@ from time import sleep
 import sys
 
 # ================================
-# ⚙️ Background Functions
+# ⚙️ Background function
 # ================================
-def monitorSwitches():
-    print("[Monitor] Processo de verificação de mudanças iniciado.")
-    previous_states = getSwitches()
-
-    while True:
-        try:
-            changed = compareSwitches(previous_states)
-            if didntChange(changed):
-                sleep(0.1)
-                continue
-
-            for idx in changed:
-                pos = idx + 1
-                current = getSwitches()[idx]
-
-                if current == 0:
-                    # Switch pressionado (ocupado)
-                    print(f"[Monitor] Detetado NOVO ocupado na posição {pos}")
-                    indicateRightPos(pos)
-                else:
-                    # Switch libertado (desocupado)
-                    print(f"[Monitor] Posição {pos} agora está LIVRE")
-                    deactivate_segment(pos)
-
-            previous_states = getSwitches()
-            sleep(0.1)
-        except KeyboardInterrupt:
-            break
-        except Exception as e:
-            print(f"[Erro no monitor] {e}")
+def monitorOutOfSyncSwitches():
+    print("[Monitor] Início da verificação contínua com a API.")
+    try:
+        while True:
             sleep(1)
+            states_local = getSwitches()
+            for idx, gpio_state in enumerate(states_local):
+                pos = idx + 1
+                physical_occupied = (gpio_state == 0)
+                api_occupied = isOccupied(pos)
+
+                if physical_occupied != api_occupied:
+                    print(f"[Monitor] Desincronizado na posição {pos}")
+                    warnOccupiedPos(pos)
+                else:
+                    deactivate_segment(pos)
+    except KeyboardInterrupt:
+        print("[Monitor] Terminado.")
+    except Exception as e:
+        print(f"[Monitor] Erro: {e}")
 
 # ================================
 # ⭐ Main code
 # ================================
 if __name__ == "__main__":
     try:
-        print("[Sistema] Início do programa")
+        print("[Sistema] Início do programa.")
         ledsOff()
 
         print("[Sistema] Sincronização inicial com a API...")
@@ -67,12 +56,12 @@ if __name__ == "__main__":
         print("[Sistema] Teste de arranque dos LEDs")
         startUpLEDS()
 
-        # Iniciar processo para vigiar mudanças locais
-        monitorProcess = multiprocessing.Process(target=monitorSwitches, daemon=True)
+        # Inicia processo de monitorização contínua com comparação à API
+        monitorProcess = multiprocessing.Process(target=monitorOutOfSyncSwitches, daemon=True)
         monitorProcess.start()
 
         while True:
-            print("\n[Main] Aguardando leitura de código de barras...")
+            print("\n[Main] À espera da leitura do código de barras...")
             id_input = input("Introduz o código de barras: ").strip()
             if id_input.lower() in ("exit", "quit"):
                 print("[Sistema] A sair.")
@@ -90,32 +79,34 @@ if __name__ == "__main__":
             print(f"[Main] Código {id_input} corresponde à posição {pos}.")
             indicateRightPos(pos)
 
-            print("[Main] À espera de mudança de switch...")
+            print("[Main] À espera da colocação na posição correta...")
             oldStates = getSwitches()
             while True:
-                changed = compareSwitches(oldStates)
-                if not didntChange(changed):
-                    if (pos - 1) in changed:
-                        current = getSwitches()[pos - 1]
-                        if current == 0:
-                            print("[Main] Colocada na posição CORRETA!")
-                            rightPos(pos)
-                            break
-                        else:
-                            print("[Main] Retirada da posição correta.")
-                            deactivate_segment(pos)
-                            break
-                    else:
-                        wrong_pos = changed[0] + 1
-                        print(f"[Main] Colocada na posição ERRADA: {wrong_pos}")
-                        warnWrongPos(pos, wrong_pos)
-                        print("[Main] À espera que a errada seja removida...")
-                        while getSwitches()[wrong_pos - 1] == 0:
-                            sleep(0.1)
-                        print("[Main] Errada removida.")
-                        indicateRightPos(pos)
-                        oldStates = getSwitches()
                 sleep(0.1)
+                changed = compareSwitches(oldStates)
+                if didntChange(changed):
+                    continue
+
+                if (pos - 1) in changed:
+                    current = getSwitches()[pos - 1]
+                    if current == 0:
+                        print("[Main] Colocada na posição correta!")
+                        rightPos(pos)
+                        break
+                    else:
+                        print("[Main] Retirada da posição correta.")
+                        deactivate_segment(pos)
+                        break
+                else:
+                    wrong_pos = changed[0] + 1
+                    print(f"[Main] Colocada na posição errada: {wrong_pos}")
+                    warnWrongPos(pos, wrong_pos)
+                    print("[Main] À espera que a errada seja removida...")
+                    while getSwitches()[wrong_pos - 1] == 0:
+                        sleep(0.1)
+                    print("[Main] Errada removida.")
+                    indicateRightPos(pos)
+                    oldStates = getSwitches()
 
     except KeyboardInterrupt:
         print("\n[Sistema] Interrompido pelo utilizador.")
