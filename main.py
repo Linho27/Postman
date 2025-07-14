@@ -92,10 +92,12 @@ if __name__ == "__main__":
                     if current == 0:
                         print("[Main] Colocada na posição correta!")
                         rightPos(pos)
+                        togglePos(pos)
                         break
                     else:
                         print("[Main] Retirada da posição correta.")
                         deactivate_segment(pos)
+                        togglePos(pos)
                         break
                 else:
                     wrong_pos = changed[0] + 1
