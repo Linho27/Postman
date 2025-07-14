@@ -32,7 +32,10 @@ def getPos(id):
             plates = response.json()
             for position, data in plates.items():
                 if data["id"] == id:
-                    return position
+                    try:
+                        return int(position)
+                    except ValueError:
+                        return f"Erro: posição inválida devolvida pela API ({position})"
             return f"Peça com código de série {id} não encontrada."
         else:
             return f"Erro ao obter dados do servidor. Código de status: {response.status_code}"
