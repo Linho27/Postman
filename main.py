@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 API_BASE = os.getenv("BASE_API")
-waiting = False
 
 # ================================
 # 📦 Imports
