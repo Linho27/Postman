@@ -25,6 +25,7 @@ def monitorOutOfSyncSwitches():
     print("[Monitor] Início da verificação contínua com a API.")
     try:
         while True:
+            print(waiting)
             if not waiting:
                 sleep(1)
                 states_local = getSwitches()
