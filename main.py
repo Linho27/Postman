@@ -27,7 +27,7 @@ def monitorOutOfSyncSwitches():
         while True:
             print(waiting)
             if not waiting:
-                sleep(3)
+                sleep(1)
                 states_local = getSwitches()
                 for idx, gpio_state in enumerate(states_local):
                     pos = idx + 1
@@ -66,7 +66,6 @@ if __name__ == "__main__":
         while True:
             print("\n[Main] À espera da leitura do código de barras...")
             id_input = input("Introduz o código de barras: ").strip()
-            waiting = True
             if id_input.lower() in ("exit", "quit"):
                 print("[Sistema] A sair.")
                 break
@@ -87,6 +86,7 @@ if __name__ == "__main__":
             oldStates = getSwitches()
             while True:
                 sleep(0.1)
+                waiting = True
                 changed = compareSwitches(oldStates)
                 if didntChange(changed):
                     continue
