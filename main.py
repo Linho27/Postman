@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 API_BASE = os.getenv("BASE_API")
+waiting = False
 
 # ================================
 # 📦 Imports
@@ -24,18 +25,19 @@ def monitorOutOfSyncSwitches():
     print("[Monitor] Início da verificação contínua com a API.")
     try:
         while True:
-            sleep(1)
-            states_local = getSwitches()
-            for idx, gpio_state in enumerate(states_local):
-                pos = idx + 1
-                physical_occupied = (gpio_state == 0)
-                api_occupied = isOccupied(pos)
+            if not waiting:
+                sleep(1)
+                states_local = getSwitches()
+                for idx, gpio_state in enumerate(states_local):
+                    pos = idx + 1
+                    physical_occupied = (gpio_state == 0)
+                    api_occupied = isOccupied(pos)
 
-                if physical_occupied != api_occupied:
-                    print(f"[Monitor] Desincronizado na posição {pos}")
-                    warnOccupiedPos(pos)
-                else:
-                    deactivate_segment(pos)
+                    if physical_occupied != api_occupied:
+                        print(f"[Monitor] Desincronizado na posição {pos}")
+                        warnOccupiedPos(pos)
+                    else:
+                        deactivate_segment(pos)
     except KeyboardInterrupt:
         print("[Monitor] Terminado.")
     except Exception as e:
@@ -63,6 +65,7 @@ if __name__ == "__main__":
         while True:
             print("\n[Main] À espera da leitura do código de barras...")
             id_input = input("Introduz o código de barras: ").strip()
+            waiting = True
             if id_input.lower() in ("exit", "quit"):
                 print("[Sistema] A sair.")
                 break
@@ -93,11 +96,13 @@ if __name__ == "__main__":
                         print("[Main] Colocada na posição correta!")
                         rightPos(pos)
                         togglePos(pos)
+                        waiting = False
                         break
                     else:
                         print("[Main] Retirada da posição correta.")
-                        deactivate_segment(pos)
+                        rightPos(pos)
                         togglePos(pos)
+                        waiting = False
                         break
                 else:
                     wrong_pos = changed[0] + 1
