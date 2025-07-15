@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 API_BASE = os.getenv("BASE_API")
+waiting = False
 
 # ================================
 # 📦 Imports
@@ -26,7 +27,7 @@ def monitorOutOfSyncSwitches():
         while True:
             print(waiting)
             if not waiting:
-                sleep(1)
+                sleep(3)
                 states_local = getSwitches()
                 for idx, gpio_state in enumerate(states_local):
                     pos = idx + 1
