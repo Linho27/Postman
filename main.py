@@ -5,7 +5,6 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 API_BASE = os.getenv("BASE_API")
-waiting = False
 
 # ================================
 # 📦 Imports
@@ -15,30 +14,34 @@ from modules.switches import *
 from modules.connection import *
 import RPi.GPIO as GPIO
 import multiprocessing
+from multiprocessing import Value
 from time import sleep
 import sys
 
 # ================================
 # ⚙️ Background function
 # ================================
-def monitorOutOfSyncSwitches():
+def monitorOutOfSyncSwitches(waiting):
     print("[Monitor] Início da verificação contínua com a API.")
     try:
         while True:
-            print(waiting)
-            if not waiting:
-                sleep(1)
-                states_local = getSwitches()
-                for idx, gpio_state in enumerate(states_local):
-                    pos = idx + 1
-                    physical_occupied = (gpio_state == 0)
-                    api_occupied = isOccupied(pos)
+            if waiting.value:
+                # Pausa o monitor enquanto o main está à espera de colocação
+                sleep(0.5)
+                continue
 
-                    if physical_occupied != api_occupied:
-                        print(f"[Monitor] Desincronizado na posição {pos}")
-                        warnOccupiedPos(pos)
-                    else:
-                        deactivate_segment(pos)
+            sleep(1)
+            states_local = getSwitches()
+            for idx, gpio_state in enumerate(states_local):
+                pos = idx + 1
+                physical_occupied = (gpio_state == 0)
+                api_occupied = isOccupied(pos)
+
+                if physical_occupied != api_occupied:
+                    print(f"[Monitor] Desincronizado na posição {pos}")
+                    warnOccupiedPos(pos)
+                else:
+                    deactivate_segment(pos)
     except KeyboardInterrupt:
         print("[Monitor] Terminado.")
     except Exception as e:
@@ -59,8 +62,11 @@ if __name__ == "__main__":
         print("[Sistema] Teste de arranque dos LEDs")
         startUpLEDS()
 
+        # Cria variável partilhada
+        waiting = Value('b', False)
+
         # Inicia processo de monitorização contínua com comparação à API
-        monitorProcess = multiprocessing.Process(target=monitorOutOfSyncSwitches, daemon=True)
+        monitorProcess = multiprocessing.Process(target=monitorOutOfSyncSwitches, args=(waiting,), daemon=True)
         monitorProcess.start()
 
         while True:
@@ -84,9 +90,11 @@ if __name__ == "__main__":
 
             print("[Main] À espera da colocação na posição correta...")
             oldStates = getSwitches()
+
+            waiting.value = True  # Sinaliza ao monitor para parar notificações
+
             while True:
                 sleep(0.1)
-                waiting = True
                 changed = compareSwitches(oldStates)
                 if didntChange(changed):
                     continue
@@ -97,13 +105,13 @@ if __name__ == "__main__":
                         print("[Main] Colocada na posição correta!")
                         rightPos(pos)
                         togglePos(pos)
-                        waiting = False
+                        waiting.value = False
                         break
                     else:
                         print("[Main] Retirada da posição correta.")
                         rightPos(pos)
                         togglePos(pos)
-                        waiting = False
+                        waiting.value = False
                         break
                 else:
                     wrong_pos = changed[0] + 1
