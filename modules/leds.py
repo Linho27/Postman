@@ -115,5 +115,5 @@ def warnWrongPos(right_pos, wrong_pos):
 
 def rightPos(pos):
     activate_segment(pos, GREEN)
-    time.sleep(1.5)
+    time.sleep(3)
     deactivate_segment(pos)

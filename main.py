@@ -86,12 +86,11 @@ if __name__ == "__main__":
                 continue
 
             print(f"[Main] Código {id_input} corresponde à posição {pos}.")
+            waiting.value = True  # Sinaliza ao monitor para parar notificações
             indicateRightPos(pos)
 
             print("[Main] À espera da colocação na posição correta...")
             oldStates = getSwitches()
-
-            waiting.value = True  # Sinaliza ao monitor para parar notificações
 
             while True:
                 sleep(0.1)
