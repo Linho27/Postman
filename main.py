@@ -19,7 +19,7 @@ from time import sleep
 import sys
 
 # ================================
-# ⚙️ Background function
+# ⚙ Background function
 # ================================
 def monitorOutOfSyncSwitches(waiting):
     print("[Monitor] Início da verificação contínua com a API.")
@@ -32,16 +32,23 @@ def monitorOutOfSyncSwitches(waiting):
 
             sleep(1)
             states_local = getSwitches()
+            out_of_sync_positions = [] # Lista para guardar posições dessincronizadas
+
             for idx, gpio_state in enumerate(states_local):
                 pos = idx + 1
-                physical_occupied = (gpio_state == 0)
+                physical_occupied = (gpio_state == 0) # 0 = pressionado/ocupado
                 api_occupied = isOccupied(pos)
 
                 if physical_occupied != api_occupied:
                     print(f"[Monitor] Desincronizado na posição {pos}")
-                    warnOccupiedPos(pos)
+                    out_of_sync_positions.append(pos) # Adiciona à lista
                 else:
-                    deactivate_segment(pos)
+                    deactivate_segment(pos) # Garante que está desligado se estiver sincronizado
+            
+            # Se houver posições dessincronizadas, faz todas piscarem ao mesmo tempo
+            if out_of_sync_positions:
+                blink_multiple_segments(out_of_sync_positions, RED, duration=3, blinks=5)
+            
     except KeyboardInterrupt:
         print("[Monitor] Terminado.")
     except Exception as e:
@@ -50,7 +57,7 @@ def monitorOutOfSyncSwitches(waiting):
 # ================================
 # ⭐ Main code
 # ================================
-if __name__ == "__main__":
+if _name_ == "_main_":
     try:
         print("[Sistema] Início do programa.")
         ledsOff()
@@ -86,7 +93,7 @@ if __name__ == "__main__":
                 continue
 
             print(f"[Main] Código {id_input} corresponde à posição {pos}.")
-            waiting.value = True  # Sinaliza ao monitor para parar notificações
+            waiting.value = True    # Sinaliza ao monitor para parar notificações
             
 
             print("[Main] À espera da colocação na posição correta...")
